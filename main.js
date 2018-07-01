@@ -1,4 +1,7 @@
 const { app, BrowserWindow } = require('electron')
+const persistence = require('./persistence')
+
+persistence()
 
 let mainWindow
 
