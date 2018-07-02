@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron')
 const persistence = require('./persistence')
-console.log(persistence)
+
 persistence()
 
 let mainWindow
@@ -30,5 +30,3 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) createWindow()
 })
-
-console.log('DFGSDFGDSFGSDFGSFG')
