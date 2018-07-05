@@ -11,9 +11,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bookshelf": "^0.13.3",
     "electron": "^2.0.3",
     "knex": "^0.13.0",
+    "objection": "^1.1.10",
     "sqlite3": "^4.0.1"
   },
   "devDependencies": {
