@@ -1,4 +1,4 @@
-const Model = require('../../persistence')
+const { Model } = require('objection')
 
 class Session extends Model {
   static get tableName() {

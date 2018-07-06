@@ -1,22 +1,12 @@
-const { desktopCapturer } = require('electron')
+var { ipcRenderer } = require('electron')
 
-const refreshwindows = document.querySelector('#refresh-windows-btn')
-const windowList = document.querySelector('#window-list')
+const processList = document.querySelector('#process-list')
 
-refreshwindows.addEventListener('click', async () => {
-  const openWindows = await getOpenWindows()
-  openWindows.forEach(window => {
-    let windowElm = document.createElement('li')
-    windowElm.textContent = window.name
-    windowList.appendChild(windowElm)
-  })
-})
-
-const getOpenWindows = () => {
-  return new Promise((resolve, reject) => {
-    desktopCapturer.getSources({ types: ['window'] }, (error, sources) => {
-      if (error) reject(error)
-      resolve(sources)
+ipcRenderer.on('update-programs', (event, programs) => {
+    console.log('receiving', event)
+    programs.forEach(program => {
+      let processElm = document.createElement('li')
+      processElm.textContent = JSON.stringify(program)
+      processList.appendChild(processElm)
     })
-  })
-}
+})
