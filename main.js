@@ -11,6 +11,13 @@ const { Model } = require('objection')
 Model.knex(db)
 
 
+// listen for processes
+const Program = require('./src/models/program')
+const Session = require('./src/models/session')
+const saveSnapshot = require('./process')(Program, Session)
+
+saveSnapshot()
+
 
 // app
 const { app, BrowserWindow } = require('electron')
@@ -26,7 +33,6 @@ const createWindow = () => {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
-    const Program = require('./src/models/program')
     Program.query().then((programs) => {
       mainWindow.webContents.send('update-programs', programs)
     })
@@ -37,9 +43,7 @@ const createWindow = () => {
   })
 }
 
-app.on('ready', () => {
-  createWindow()
-})
+app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

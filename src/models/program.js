@@ -1,4 +1,5 @@
 const { Model } = require('objection')
+const Session = require('./session')
 
 class Program extends Model {
   static get tableName() {
