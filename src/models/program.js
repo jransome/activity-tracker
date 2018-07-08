@@ -1,23 +1,9 @@
-const { Model } = require('objection')
-const Session = require('./session')
-
-class Program extends Model {
-  static get tableName() {
-    return 'programs'
+module.exports = (sequelize, DataTypes) => {
+  const Program = sequelize.define('Program', {
+    name: DataTypes.STRING
+  }, {})
+  Program.associate = function (models) {
+    // associations can be defined here
   }
-
-  static get relationMappings() {
-    return {
-      comments: {
-        relation: Model.HasManyRelation,
-        modelClass: Session,
-        join: {
-          from: 'programs.id',
-          to: 'sessions.program_id'
-        }
-      }
-    }
-  }
+  return Program
 }
-
-module.exports = Program

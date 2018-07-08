@@ -6,15 +6,16 @@
   "scripts": {
     "start": "electron .",
     "postinstall": "install-app-deps",
+    "dbmigrate": "node_modules/.bin/sequelize db:migrate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "electron": "^2.0.3",
-    "knex": "^0.13.0",
-    "objection": "^1.1.10",
     "process-list": "^1.2.3",
+    "sequelize": "^4.38.0",
+    "sequelize-cli": "^4.0.0",
     "sqlite3": "^4.0.1"
   },
   "devDependencies": {

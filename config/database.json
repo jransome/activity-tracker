@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "root",
+    "password": null,
+    "database": "database_development",
+    "storage": "db/database.sqlite3",
+    "dialect": "sqlite",
+    "operatorsAliases": false
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "database_development",
+    "storage": "db/database.sqlite3",
+    "dialect": "sqlite",
+    "operatorsAliases": false
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "database_development",
+    "storage": "db/database.sqlite3",
+    "dialect": "sqlite",
+    "operatorsAliases": false
+  }
+}

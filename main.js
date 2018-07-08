@@ -1,22 +1,30 @@
 // setup db
-const dbConfig = require('./knexfile')
+const Sequelize = require('sequelize')
+const db = new Sequelize('database', 'username', 'password', {
+  operatorsAliases: false,
+  dialect: 'sqlite',
+  storage: 'db/database.sqlite3'
+})
 
-const sqlite3 = require('sqlite3').verbose()
-new sqlite3.Database(dbConfig.connection.filename)
-
-const db = require('knex')(dbConfig)
-db.migrate.latest()
-
-const { Model } = require('objection')
-Model.knex(db)
+db.authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully.')
+    db.query("PRAGMA journal_mode=WAL;")
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err)
+  })
 
 
 // listen for processes
-const Program = require('./src/models/program')
-const Session = require('./src/models/session')
-const saveSnapshot = require('./process')(Program, Session)
+const saveSnapshot = require('./process')(db)
 
 saveSnapshot()
+
+// setTimeout(() => {
+//   console.log('Saving 2nd')
+//   saveSnapshot()
+// }, 5000)
 
 
 // app
@@ -33,9 +41,9 @@ const createWindow = () => {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
-    Program.query().then((programs) => {
-      mainWindow.webContents.send('update-programs', programs)
-    })
+    // Program.query().then((programs) => {
+    //   mainWindow.webContents.send('update-programs', programs)
+    // })
   })
 
   mainWindow.on('closed', () => {
