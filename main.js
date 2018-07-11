@@ -1,24 +1,25 @@
 // setup db
-const Sequelize = require('sequelize')
-const db = new Sequelize('database', 'username', 'password', {
-  operatorsAliases: false,
-  dialect: 'sqlite',
-  storage: 'db/database.sqlite3'
-})
+const db = require('./src/models')
+// const Sequelize = require('sequelize')
+// const db = new Sequelize('database', 'username', 'password', {
+//   operatorsAliases: false,
+//   dialect: 'sqlite',
+//   storage: 'db/database.sqlite3'
+// })
 
-db.authenticate()
-  .then(() => {
-    console.log('Connection has been established successfully.')
-    db.query("PRAGMA journal_mode=WAL;")
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err)
-  })
+// db.authenticate()
+//   .then(() => {
+//     db.query("PRAGMA journal_mode=WAL;")
+//     console.log('Connection has been established successfully.')
+//   })
+//   .catch(err => {
+//     console.error('Unable to connect to the database:', err)
+//   })
 
 
 // listen for processes
-const saveSnapshot = require('./process')(db)
-
+const processList = {}//require("process-list")
+const saveSnapshot = require('./process')(processList, db)
 saveSnapshot()
 
 // setTimeout(() => {

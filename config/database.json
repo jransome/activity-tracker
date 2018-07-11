@@ -10,7 +10,7 @@
   "test": {
     "username": "root",
     "password": null,
-    "database": "database_development",
+    "database": "database_test",
     "storage": "db/database.sqlite3",
     "dialect": "sqlite",
     "operatorsAliases": false
@@ -18,7 +18,7 @@
   "production": {
     "username": "root",
     "password": null,
-    "database": "database_development",
+    "database": "database_production",
     "storage": "db/database.sqlite3",
     "dialect": "sqlite",
     "operatorsAliases": false

@@ -2,8 +2,10 @@ module.exports = (sequelize, DataTypes) => {
   const Program = sequelize.define('Program', {
     name: DataTypes.STRING
   }, {})
-  Program.associate = function (models) {
-    // associations can be defined here
+
+  Program.associate = (models) => {
+    Program.hasMany(models.Session)
   }
+  
   return Program
 }

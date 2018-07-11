@@ -11,9 +11,9 @@
   },
   "author": "",
   "license": "ISC",
+  "process-list": "^1.2.3",
   "dependencies": {
     "electron": "^2.0.3",
-    "process-list": "^1.2.3",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
     "sqlite3": "^4.0.1"
