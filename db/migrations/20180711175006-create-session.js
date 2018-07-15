@@ -7,18 +7,6 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      pid: {
-        type: Sequelize.INTEGER
-      },
-      isActive: {
-        type: Sequelize.BOOLEAN
-      },
-      startTime: {
-        type: Sequelize.DATE
-      },
-      endTime: {
-        type: Sequelize.DATE
-      },
       ProgramId: {
         type: Sequelize.INTEGER,
         references: {
@@ -28,6 +16,21 @@ module.exports = {
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
+      },
+      pid: {
+        type: Sequelize.INTEGER
+      },
+      pidName:{
+        type: Sequelize.STRING
+      },
+      isActive: {
+        type: Sequelize.BOOLEAN
+      },
+      startTime: {
+        type: Sequelize.DATE
+      },
+      endTime: {
+        type: Sequelize.DATE
       },
       createdAt: {
         allowNull: false,

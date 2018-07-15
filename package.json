@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "npm run dbmigrate && electron .",
     "postinstall": "install-app-deps",
     "dbmigrate": "node_modules/.bin/sequelize db:migrate",
     "test": "echo \"Error: no test specified\" && exit 1"
