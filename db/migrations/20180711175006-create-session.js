@@ -19,8 +19,15 @@ module.exports = {
       endTime: {
         type: Sequelize.DATE
       },
-      duration: {
-        type: Sequelize.TIME
+      ProgramId: {
+        type: Sequelize.INTEGER,
+        references: {
+          allowNull: false,
+          model: 'Programs', 
+          key: 'id', 
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       createdAt: {
         allowNull: false,

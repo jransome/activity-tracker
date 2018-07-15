@@ -3,12 +3,11 @@ module.exports = (sequelize, DataTypes) => {
     pid: DataTypes.INTEGER,
     isActive: DataTypes.BOOLEAN,
     startTime: DataTypes.DATE,
-    endTime: DataTypes.DATE,
-    duration: DataTypes.TIME
+    endTime: DataTypes.DATE
   }, {})
 
   Session.associate = (models) => {
-    Session.belongsTo(models.Program);
+    Session.belongsTo(models.Program)
   }
 
   return Session
