@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "npm run dbmigrate && electron .",
+    "start": "npm run dbmigrate && electron -r babel-register .",
     "postinstall": "install-app-deps",
     "dbmigrate": "node_modules/.bin/sequelize db:migrate",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,6 +19,8 @@
     "sqlite3": "^4.0.1"
   },
   "devDependencies": {
+    "babel-preset-es2015": "^6.24.1",
+    "babel-register": "^6.26.0",
     "electron-builder": "^20.18.0"
   }
 }
