@@ -92,8 +92,77 @@ describe('process capturer', async () => {
     const savedSessions = await db.Session.findAll()
 
     expect(savedSessions.length).toEqual(7)
+    expect(savedSessions[0].isActive).toBeTruthy()
     expect(savedSessions[1].isActive).toBeFalsy()
+    expect(savedSessions[2].isActive).toBeTruthy()
+    expect(savedSessions[3].isActive).toBeTruthy()
     expect(savedSessions[4].isActive).toBeFalsy()
     expect(savedSessions[5].isActive).toBeFalsy()
+    expect(savedSessions[6].isActive).toBeTruthy()
+    expect(savedSessions[0].endTime).toBeNull()
+    expect(savedSessions[1].endTime).toBeInstanceOf(Date)
+    expect(savedSessions[2].endTime).toBeNull()
+    expect(savedSessions[3].endTime).toBeNull()
+    expect(savedSessions[4].endTime).toBeInstanceOf(Date)
+    expect(savedSessions[5].endTime).toBeInstanceOf(Date)
+    expect(savedSessions[6].endTime).toBeNull()
+  })
+
+  it('should handle the OS recycling PIDs', async () => {
+    const processSnapshot1 = [
+      mockProcessFactory(1, "chrome.exe", new Date('1990')),
+      mockProcessFactory(2, "vscode.exe", new Date('1990')),
+    ]
+    mockPoller.snapshot.mockResolvedValue(processSnapshot1)
+    await saveSnapshot()
+
+    const processSnapshot2 = [
+      mockProcessFactory(1, "audacity.exe", new Date('1995')),
+      mockProcessFactory(2, "explorer.exe", new Date('1995')),
+    ]
+    mockPoller.snapshot.mockResolvedValue(processSnapshot2)
+    await saveSnapshot()
+
+    const savedSessions = await db.Session.findAll()
+
+    expect(savedSessions.length).toEqual(4)
+    expect(savedSessions[0].isActive).toBeFalsy()
+    expect(savedSessions[1].isActive).toBeFalsy()
+    expect(savedSessions[2].isActive).toBeTruthy()
+    expect(savedSessions[3].isActive).toBeTruthy()
+
+    expect(savedSessions[0].endTime).toBeInstanceOf(Date)
+    expect(savedSessions[1].endTime).toBeInstanceOf(Date)
+    expect(savedSessions[2].endTime).toBeNull()
+    expect(savedSessions[3].endTime).toBeNull()
+  })
+
+  it('should handle the OS recycling PIDs with the same application name', async () => {
+    const processSnapshot1 = [
+      mockProcessFactory(1, "chrome.exe", new Date('1990')),
+      mockProcessFactory(2, "chrome.exe", new Date('1990')),
+    ]
+    mockPoller.snapshot.mockResolvedValue(processSnapshot1)
+    await saveSnapshot()
+
+    const processSnapshot2 = [
+      mockProcessFactory(1, "chrome.exe", new Date('1995')),
+      mockProcessFactory(2, "chrome.exe", new Date('1995')),
+    ]
+    mockPoller.snapshot.mockResolvedValue(processSnapshot2)
+    await saveSnapshot()
+
+    const savedSessions = await db.Session.findAll()
+
+    expect(savedSessions.length).toEqual(4)
+    expect(savedSessions[0].isActive).toBeFalsy()
+    expect(savedSessions[1].isActive).toBeFalsy()
+    expect(savedSessions[2].isActive).toBeTruthy()
+    expect(savedSessions[3].isActive).toBeTruthy()
+
+    expect(savedSessions[0].endTime).toBeInstanceOf(Date)
+    expect(savedSessions[1].endTime).toBeInstanceOf(Date)
+    expect(savedSessions[2].endTime).toBeNull()
+    expect(savedSessions[3].endTime).toBeNull()
   })
 })
