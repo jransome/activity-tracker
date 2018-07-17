@@ -3,7 +3,7 @@
     "username": "root",
     "password": null,
     "database": "database_development",
-    "storage": "db/database.sqlite3",
+    "storage": "db/db_dev.sqlite3",
     "dialect": "sqlite",
     "operatorsAliases": false
   },
@@ -11,16 +11,18 @@
     "username": "root",
     "password": null,
     "database": "database_test",
-    "storage": "db/database.sqlite3",
+    "storage": "db/db_test.sqlite3",
     "dialect": "sqlite",
-    "operatorsAliases": false
+    "operatorsAliases": false,
+    "logging": false
   },
   "production": {
     "username": "root",
     "password": null,
     "database": "database_production",
-    "storage": "db/database.sqlite3",
+    "storage": "db/db.sqlite3",
     "dialect": "sqlite",
-    "operatorsAliases": false
+    "operatorsAliases": false,
+    "logging": false
   }
 }
