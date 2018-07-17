@@ -33,10 +33,13 @@ const isStoredSessionNotInSnapshot = (storedSession, snapshot) => {
 
 const saveSnapshot = (poller, db) => async () => {
   const fields = ['pid', 'name', 'path', 'starttime']
-
-  const processSnapshot = await poller.snapshot(fields)
-  await recordSnapshot(db, processSnapshot)
-  await resolveExpiredSessions(db.Session, processSnapshot)
+  try {
+    const processSnapshot = await poller.snapshot(fields)
+    await recordSnapshot(db, processSnapshot)
+    await resolveExpiredSessions(db.Session, processSnapshot)
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 export default saveSnapshot

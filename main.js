@@ -1,14 +1,14 @@
-// setup db
-const dbConnection = require('./src/models')
+import { app, BrowserWindow } from 'electron'
+import dbConnection from './src/models'
+import processRecorder from './process'
 
 // listen for processes
-const processList = {}//require("process-list")
-const saveSnapshot = require('./process')(processList, dbConnection)
+// import processPoller from 'process-list' // this package does not install correctly on mac, commented out when developing on mac
+const processPoller = { snapshot: () => Promise.resolve([]) } // stub for developing on mac
+const saveSnapshot = processRecorder(processPoller, dbConnection)
 saveSnapshot()
 
 // app
-const { app, BrowserWindow } = require('electron')
-
 let mainWindow
 
 const createWindow = () => {
@@ -20,9 +20,6 @@ const createWindow = () => {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
-    // Program.query().then((programs) => {
-    //   mainWindow.webContents.send('update-programs', programs)
-    // })
   })
 
   mainWindow.on('closed', () => {
