@@ -1,5 +1,5 @@
-import db from './src/models'
-import processRecorder from './process'
+import db from '../models'
+import ProcessRecorder from './index'
 
 const purgeDb = async () => {
   const models = Object.keys(db)
@@ -15,7 +15,8 @@ const mockProcessFactory = (pid, name, starttime = new Date) => ({ pid, name, st
 
 describe('process capturer', () => {
   const mockPoller = { snapshot: jest.fn() }
-  const saveSnapshot = processRecorder(mockPoller, db)
+  const interval = 1000
+  const processRecorder = new ProcessRecorder(mockPoller, db, interval)
 
   beforeEach(async () => {
     await purgeDb()
@@ -33,7 +34,7 @@ describe('process capturer', () => {
     ]
     mockPoller.snapshot.mockResolvedValue(processSnapshot)
 
-    await saveSnapshot()
+    await processRecorder.saveSnapshot()
 
     const savedPrograms = await db.Program.findAll()
 
@@ -55,7 +56,7 @@ describe('process capturer', () => {
     ]
     mockPoller.snapshot.mockResolvedValue(processSnapshot)
 
-    await saveSnapshot()
+    await processRecorder.saveSnapshot()
 
     const savedSessions = await db.Session.findAll()
 
@@ -78,7 +79,7 @@ describe('process capturer', () => {
       mockProcessFactory(7, "vscode.exe", new Date('1990')),
     ]
     mockPoller.snapshot.mockResolvedValue(processSnapshot1)
-    await saveSnapshot()
+    await processRecorder.saveSnapshot()
 
     const processSnapshot2 = [
       mockProcessFactory(1, "chrome.exe", new Date('1990')),
@@ -87,7 +88,7 @@ describe('process capturer', () => {
       mockProcessFactory(7, "vscode.exe", new Date('1990')),
     ]
     mockPoller.snapshot.mockResolvedValue(processSnapshot2)
-    await saveSnapshot()
+    await processRecorder.saveSnapshot()
 
     const savedSessions = await db.Session.findAll()
 
@@ -114,14 +115,14 @@ describe('process capturer', () => {
       mockProcessFactory(2, "vscode.exe", new Date('1990')),
     ]
     mockPoller.snapshot.mockResolvedValue(processSnapshot1)
-    await saveSnapshot()
+    await processRecorder.saveSnapshot()
 
     const processSnapshot2 = [
       mockProcessFactory(1, "audacity.exe", new Date('1995')),
       mockProcessFactory(2, "explorer.exe", new Date('1995')),
     ]
     mockPoller.snapshot.mockResolvedValue(processSnapshot2)
-    await saveSnapshot()
+    await processRecorder.saveSnapshot()
 
     const savedSessions = await db.Session.findAll()
 
@@ -143,14 +144,14 @@ describe('process capturer', () => {
       mockProcessFactory(2, "chrome.exe", new Date('1990')),
     ]
     mockPoller.snapshot.mockResolvedValue(processSnapshot1)
-    await saveSnapshot()
+    await processRecorder.saveSnapshot()
 
     const processSnapshot2 = [
       mockProcessFactory(1, "chrome.exe", new Date('1995')),
       mockProcessFactory(2, "chrome.exe", new Date('1995')),
     ]
     mockPoller.snapshot.mockResolvedValue(processSnapshot2)
-    await saveSnapshot()
+    await processRecorder.saveSnapshot()
 
     const savedSessions = await db.Session.findAll()
 

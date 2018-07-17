@@ -31,10 +31,10 @@ const isStoredSessionNotInSnapshot = (storedSession, snapshot) => {
     storedSession.startTime.getTime() === snapshotSession.starttime.getTime()).length == 0
 }
 
-const saveSnapshot = (poller, db) => async () => {
+const saveSnapshot = async (pollingClient, db) => {
   const fields = ['pid', 'name', 'path', 'starttime']
   try {
-    const processSnapshot = await poller.snapshot(fields)
+    const processSnapshot = await pollingClient.snapshot(fields)
     await recordSnapshot(db, processSnapshot)
     await resolveExpiredSessions(db.Session, processSnapshot)
   } catch (error) {
@@ -42,4 +42,22 @@ const saveSnapshot = (poller, db) => async () => {
   }
 }
 
-export default saveSnapshot
+export default class ProcessRecorder {
+  constructor(pollingClient, dbConnection, interval) {
+    this.interval = interval
+    this.pollingClient = pollingClient
+    this.dbConnection = dbConnection
+  }
+
+  startRecording() {
+    this.tick = setInterval(async () => await this.saveSnapshot(), this.interval)
+  }
+
+  stopRecording() {
+    if (this.tick) clearInterval(this.tick)
+  }
+
+  async saveSnapshot() {
+    await saveSnapshot(this.pollingClient, this.dbConnection)
+  }
+}

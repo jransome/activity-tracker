@@ -1,12 +1,16 @@
 import { app, BrowserWindow } from 'electron'
 import dbConnection from './src/models'
-import processRecorder from './process'
+import ProcessRecorder from './src/ProcessRecorder'
 
 // listen for processes
 // import processPoller from 'process-list' // this package does not install correctly on mac, commented out when developing on mac
 const processPoller = { snapshot: () => Promise.resolve([]) } // stub for developing on mac
-const saveSnapshot = processRecorder(processPoller, dbConnection)
-saveSnapshot()
+const processRecorder = new ProcessRecorder(processPoller, dbConnection, 5000)
+processRecorder.startRecording()
+
+setTimeout(() => {
+  processRecorder.stopRecording()
+}, 5000)
 
 // app
 let mainWindow
