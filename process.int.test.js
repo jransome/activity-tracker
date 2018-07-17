@@ -13,7 +13,7 @@ const purgeDb = async () => {
 
 const mockProcessFactory = (pid, name, starttime = new Date) => ({ pid, name, starttime })
 
-describe('process capturer', async () => {
+describe('process capturer', () => {
   const mockPoller = { snapshot: jest.fn() }
   const saveSnapshot = processRecorder(mockPoller, db)
 
