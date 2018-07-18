@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const Session = sequelize.define('Session', {
+  const ProcessSession = sequelize.define('ProcessSession', {
     pid: DataTypes.INTEGER,
     pidName: DataTypes.STRING,
     isActive: DataTypes.BOOLEAN,
@@ -7,9 +7,9 @@ module.exports = (sequelize, DataTypes) => {
     endTime: DataTypes.DATE
   }, {})
 
-  Session.associate = (models) => {
-    Session.belongsTo(models.Program)
+  ProcessSession.associate = (models) => {
+    ProcessSession.belongsTo(models.Program)
   }
 
-  return Session
+  return ProcessSession
 }

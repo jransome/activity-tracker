@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {})
 
   Program.associate = (models) => {
-    Program.hasMany(models.Session)
+    Program.hasMany(models.ProcessSession)
   }
   
   return Program

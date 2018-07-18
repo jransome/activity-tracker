@@ -1,7 +1,7 @@
-const recordSnapshot = async ({ Program, Session }, batch) => {
+const recordSnapshot = async ({ Program, ProcessSession }, batch) => {
   for (const snapshottedProcess of batch) {
     const [recordedProgram] = await Program.findCreateFind({ where: { name: snapshottedProcess.name } })
-    await Session.findCreateFind({
+    await ProcessSession.findCreateFind({
       where: {
         pid: snapshottedProcess.pid,
         pidName: snapshottedProcess.pid + snapshottedProcess.name,
@@ -13,10 +13,10 @@ const recordSnapshot = async ({ Program, Session }, batch) => {
   }
 }
 
-const resolveExpiredSessions = async (Session, snapshot) => {
-  const storedActiveSessions = await Session.findAll({ where: { isActive: true } })
+const resolveExpiredProcessSessions = async (ProcessSession, snapshot) => {
+  const storedActiveSessions = await ProcessSession.findAll({ where: { isActive: true } })
   const sessionsToClose = findExpiredSessions(storedActiveSessions, snapshot)
-  await Session.update({ isActive: false, endTime: new Date }, { where: { id: sessionsToClose } })
+  await ProcessSession.update({ isActive: false, endTime: new Date }, { where: { id: sessionsToClose } })
 }
 
 const findExpiredSessions = (storedActiveSessions, currentSnapshot) => {
@@ -36,7 +36,7 @@ const saveSnapshot = async (pollingClient, db) => {
   try {
     const processSnapshot = await pollingClient.snapshot(fields)
     await recordSnapshot(db, processSnapshot)
-    await resolveExpiredSessions(db.Session, processSnapshot)
+    await resolveExpiredProcessSessions(db.ProcessSession, processSnapshot)
   } catch (error) {
     console.log(error)
   }

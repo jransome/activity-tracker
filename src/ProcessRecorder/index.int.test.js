@@ -58,7 +58,7 @@ describe('process capturer', () => {
 
     await processRecorder.saveSnapshot()
 
-    const savedSessions = await db.Session.findAll()
+    const savedSessions = await db.ProcessSession.findAll()
 
     expect(savedSessions.length).toEqual(7)
     savedSessions.forEach((session, index) => {
@@ -90,7 +90,7 @@ describe('process capturer', () => {
     mockPoller.snapshot.mockResolvedValue(processSnapshot2)
     await processRecorder.saveSnapshot()
 
-    const savedSessions = await db.Session.findAll()
+    const savedSessions = await db.ProcessSession.findAll()
 
     expect(savedSessions.length).toEqual(7)
     expect(savedSessions[0].isActive).toBeTruthy()
@@ -124,7 +124,7 @@ describe('process capturer', () => {
     mockPoller.snapshot.mockResolvedValue(processSnapshot2)
     await processRecorder.saveSnapshot()
 
-    const savedSessions = await db.Session.findAll()
+    const savedSessions = await db.ProcessSession.findAll()
 
     expect(savedSessions.length).toEqual(4)
     expect(savedSessions[0].isActive).toBeFalsy()
@@ -153,7 +153,7 @@ describe('process capturer', () => {
     mockPoller.snapshot.mockResolvedValue(processSnapshot2)
     await processRecorder.saveSnapshot()
 
-    const savedSessions = await db.Session.findAll()
+    const savedSessions = await db.ProcessSession.findAll()
 
     expect(savedSessions.length).toEqual(4)
     expect(savedSessions[0].isActive).toBeFalsy()
