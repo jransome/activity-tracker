@@ -2,7 +2,7 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('ProcessSessions', {
+    return queryInterface.createTable('ProgramSessions', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -18,22 +18,6 @@ module.exports = {
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
-      },
-      ProgramSessionId: {
-        type: Sequelize.INTEGER,
-        references: {
-          allowNull: false,
-          model: 'ProgramSessions', 
-          key: 'id', 
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
-      },
-      pid: {
-        type: Sequelize.INTEGER
-      },
-      pidName:{
-        type: Sequelize.STRING
       },
       isActive: {
         type: Sequelize.BOOLEAN
@@ -55,6 +39,6 @@ module.exports = {
     })
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('ProcessSessions')
+    return queryInterface.dropTable('ProgramSessions')
   }
 }

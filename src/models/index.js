@@ -1,15 +1,17 @@
-const fs = require('fs')
-const path = require('path')
-const Sequelize = require('sequelize')
+import fs from 'fs'
+import path from 'path'
+import Sequelize from 'sequelize'
+import config from '../../config/database.json'
+
 const basename = path.basename(__filename)
 const env = process.env.NODE_ENV || 'development'
-const config = require('../../config/database.json')[env]
+const envConfig = config[env]
 const db = {}
 
-if (config.use_env_variable) {
-  var sequelize = new Sequelize(process.env[config.use_env_variable], config)
+if (envConfig.use_env_variable) {
+  var sequelize = new Sequelize(process.env[envConfig.use_env_variable], envConfig)
 } else {
-  var sequelize = new Sequelize(config.database, config.username, config.password, config)
+  var sequelize = new Sequelize(envConfig.database, envConfig.username, envConfig.password, envConfig)
 }
 
 fs
@@ -31,4 +33,4 @@ sequelize.query("PRAGMA journal_mode=WAL;") // use wal
 db.sequelize = sequelize
 db.Sequelize = Sequelize
 
-module.exports = db
+export default db

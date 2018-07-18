@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const ProcessSession = sequelize.define('ProcessSession', {
     pid: DataTypes.INTEGER,
     pidName: DataTypes.STRING,
@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
 
   ProcessSession.associate = (models) => {
     ProcessSession.belongsTo(models.Program)
+    ProcessSession.belongsTo(models.ProgramSession)
   }
 
   return ProcessSession
