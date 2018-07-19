@@ -5,13 +5,13 @@ import config from '../../config/database.json'
 
 const basename = path.basename(__filename)
 const env = process.env.NODE_ENV || 'development'
-const envConfig = config[env]
+const dbConfig = config[env]
 const db = {}
 
-if (envConfig.use_env_variable) {
-  var sequelize = new Sequelize(process.env[envConfig.use_env_variable], envConfig)
+if (dbConfig.use_env_variable) {
+  var sequelize = new Sequelize(process.env[dbConfig.use_env_variable], dbConfig)
 } else {
-  var sequelize = new Sequelize(envConfig.database, envConfig.username, envConfig.password, envConfig)
+  var sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, dbConfig)
 }
 
 fs
