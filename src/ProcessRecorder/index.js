@@ -1,10 +1,16 @@
 const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch) => {
   for (const snapshottedProcess of batch) {
-    const [recordedProgram] = await Program.findCreateFind({ where: { name: snapshottedProcess.name } })
+    const [recordedProgram] = await Program.findCreateFind({
+      where: {
+        name: snapshottedProcess.name
+      }
+    })
     const [recordedProgramSession] = await ProgramSession.findCreateFind({
       where: {
-        isActive: true, 
+        isActive: true,
         ProgramId: recordedProgram.id,
+      },
+      defaults: {
         startTime: snapshottedProcess.starttime,
       }
     })
