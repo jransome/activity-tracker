@@ -1,16 +1,7 @@
-import db from '../models'
-import ProcessRecorder from './index'
-
-const purgeDb = async () => {
-  const models = Object.keys(db)
-  models.forEach(async (key) => {
-    if (key.toLowerCase() === 'sequelize') return null
-    await db[key].destroy({ where: {}, force: true, truncate: true })
-    await db.sequelize.query(`DELETE FROM SQLITE_SEQUENCE WHERE NAME='${key}s';`)
-  })
-}
-
-const mockProcessFactory = (pid, name, starttime = new Date) => ({ pid, name, starttime })
+import ProcessRecorder from '../../src/ProcessRecorder'
+import db from '../../src/models'
+import purgeDb from '../helpers/purgeDb'
+import mockProcessFactory from '../helpers/mockProcess'
 
 describe('ProcessRecorder', () => {
   const mockPoller = { snapshot: jest.fn() }
@@ -18,7 +9,7 @@ describe('ProcessRecorder', () => {
   const processRecorder = new ProcessRecorder(mockPoller, db, interval)
 
   beforeEach(async () => {
-    await purgeDb()
+    await purgeDb(db)
   })
 
   describe('saving to db', () => {
