@@ -3,7 +3,8 @@ export default (sequelize, DataTypes) => {
     startTime: DataTypes.DATE,
     isActive: DataTypes.BOOLEAN,
     startTime: DataTypes.DATE,
-    endTime: DataTypes.DATE
+    endTime: DataTypes.DATE,
+    duration: DataTypes.INTEGER
   }, {})
   ProgramSession.associate = (models) => {
     ProgramSession.belongsTo(models.Program)
