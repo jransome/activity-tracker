@@ -28,21 +28,33 @@ const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch
 }
 
 const resolveExpiredProcessSessions = async (ProcessSession, snapshot) => {
-  const storedActiveSessions = await ProcessSession.findAll({ where: { isActive: true } })
-  const sessionsToClose = findExpiredSessions(storedActiveSessions, snapshot)
-  await ProcessSession.update({ isActive: false, endTime: new Date }, { where: { id: sessionsToClose } })
+  const storedActiveProcesses = await ProcessSession.findAll({ where: { isActive: true } })
+  const processSessionsToClose = findExpiredProcesses(storedActiveProcesses, snapshot)
+  await ProcessSession.update({ isActive: false, endTime: new Date }, { where: { id: processSessionsToClose } })
 }
 
-const findExpiredSessions = (storedActiveSessions, currentSnapshot) => {
-  return storedActiveSessions.map((sas => {
-    if (isStoredSessionNotInSnapshot(sas, currentSnapshot)) return sas.id
+const findExpiredProcesses = (storedActiveProcesses, currentSnapshot) => {
+  return storedActiveProcesses.map((sap => {
+    if (isStoredProcessNotInSnapshot(sap, currentSnapshot)) return sap.id
   }))
 }
 
-const isStoredSessionNotInSnapshot = (storedSession, snapshot) => {
-  return snapshot.filter((snapshotSession) =>
-    storedSession.pidName === (snapshotSession.pid + snapshotSession.name) &&
-    storedSession.startTime.getTime() === snapshotSession.starttime.getTime()).length == 0
+const isStoredProcessNotInSnapshot = (storedProcess, snapshot) => {
+  return snapshot.filter((snapshotProcess) =>
+    storedProcess.pidName === (snapshotProcess.pid + snapshotProcess.name) &&
+    storedProcess.startTime.getTime() === snapshotProcess.starttime.getTime()).length == 0
+}
+
+const resolveExpiredProgramSessions = async (ProgramSession) => {
+  const storedActivePrograms = await ProgramSession.findAll({ where: { isActive: true } })
+  for (const programSession of storedActivePrograms) {
+    const constituentProcesses = await programSession.getProcessSessions({ where: { isActive: true } })
+    if (constituentProcesses.length === 0) {
+      const endTime = new Date
+      const duration = endTime - programSession.startTime
+      await programSession.update({ isActive: false, endTime, duration })
+    }
+  }
 }
 
 const saveSnapshot = async (pollingClient, db) => {
@@ -51,6 +63,7 @@ const saveSnapshot = async (pollingClient, db) => {
     const processSnapshot = await pollingClient.snapshot(fields)
     await recordSnapshot(db, processSnapshot)
     await resolveExpiredProcessSessions(db.ProcessSession, processSnapshot)
+    await resolveExpiredProgramSessions(db.ProgramSession)
   } catch (error) {
     console.log(error)
   }
