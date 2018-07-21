@@ -30,7 +30,7 @@ describe('ProcessRecorder', () => {
       await processRecorder.saveSnapshot()
 
       const savedPrograms = await db.Program.findAll()
-      expect(savedPrograms.length).toEqual(3)
+      expect(savedPrograms).toHaveLength(3)
       expect(savedPrograms[0].name).toEqual("chrome.exe")
       expect(savedPrograms[1].name).toEqual("audacity.exe")
       expect(savedPrograms[2].name).toEqual("vscode.exe")
@@ -40,7 +40,7 @@ describe('ProcessRecorder', () => {
       await processRecorder.saveSnapshot()
 
       const savedSessions = await db.ProgramSession.findAll()
-      expect(savedSessions.length).toEqual(3)
+      expect(savedSessions).toHaveLength(3)
       expect((await savedSessions[0].getProgram()).name).toEqual("chrome.exe")
       expect((await savedSessions[1].getProgram()).name).toEqual("audacity.exe")
       expect((await savedSessions[2].getProgram()).name).toEqual("vscode.exe")
@@ -54,7 +54,7 @@ describe('ProcessRecorder', () => {
       await processRecorder.saveSnapshot()
 
       const savedSessions = await db.ProcessSession.findAll()
-      expect(savedSessions.length).toEqual(7)
+      expect(savedSessions).toHaveLength(7)
       expect((await savedSessions[0].getProgram()).name).toEqual("chrome.exe")
       expect((await savedSessions[1].getProgram()).name).toEqual("chrome.exe")
       expect((await savedSessions[2].getProgram()).name).toEqual("audacity.exe")
@@ -89,7 +89,6 @@ describe('ProcessRecorder', () => {
         mockProcessFactory(7, "vscode.exe", new Date('1990')),
       ]
       mockPoller.snapshot.mockResolvedValue(firstProcessSnapshot)
-
       await processRecorder.saveSnapshot()
     })
 
@@ -117,7 +116,7 @@ describe('ProcessRecorder', () => {
       await processRecorder.saveSnapshot()
 
       const chromeProgramSessions = await db.Program.find({ where: { name: "chrome.exe" } }).then(chrome => chrome.getProgramSessions())
-      expect(chromeProgramSessions.length).toEqual(1)
+      expect(chromeProgramSessions).toHaveLength(1)
     })
 
     it('should treat consecutive processes of the same Program as a single ProgramSession', async () => {
@@ -132,8 +131,8 @@ describe('ProcessRecorder', () => {
       const savedSessions = await db.ProgramSession.findAll()
       const audacitySession = savedSessions[1]
 
-      expect(audacityProgramSessions.length).toEqual(1)
-      expect(savedSessions.length).toEqual(3)
+      expect(audacityProgramSessions).toHaveLength(1)
+      expect(savedSessions).toHaveLength(3)
       expect(audacitySession.isActive).toBeTruthy()
     })
 
@@ -147,7 +146,7 @@ describe('ProcessRecorder', () => {
       await processRecorder.saveSnapshot()
 
       const savedSessions = await db.ProgramSession.findAll()
-      expect(savedSessions.length).toEqual(4)
+      expect(savedSessions).toHaveLength(4)
       expect(savedSessions[0].isActive).toBeFalsy()
       expect(savedSessions[1].isActive).toBeFalsy()
       expect(savedSessions[2].isActive).toBeTruthy()
@@ -174,7 +173,7 @@ describe('ProcessRecorder', () => {
       await processRecorder.saveSnapshot()
 
       const savedSessions = await db.ProcessSession.findAll()
-      expect(savedSessions.length).toEqual(7)
+      expect(savedSessions).toHaveLength(7)
       expect(savedSessions[0].isActive).toBeTruthy()
       expect(savedSessions[1].isActive).toBeFalsy()
       expect(savedSessions[2].isActive).toBeTruthy()
@@ -192,6 +191,24 @@ describe('ProcessRecorder', () => {
     })
   })
 
+  describe('shutting down', () => {
+    it('closes all open sessions when recording stops', async () => {
+      const processSnapshot = [
+        mockProcessFactory(1, "chrome.exe", new Date('1990')),
+        mockProcessFactory(2, "vscode.exe", new Date('1990')),
+      ]
+      mockPoller.snapshot.mockResolvedValue(processSnapshot)
+      await processRecorder.saveSnapshot()
+
+      await processRecorder.stopRecording()
+
+      const processSessions = await db.ProcessSession.findAll()
+      const programSessions = await db.ProgramSession.findAll()
+      expect(processSessions.filter(session => session.isActive)).toHaveLength(0)
+      expect(programSessions.filter(session => session.isActive)).toHaveLength(0)
+    })
+  })
+
   describe('handling PIDs', () => {
     beforeEach(async () => {
       const firstProcessSnapshot = [
@@ -199,7 +216,6 @@ describe('ProcessRecorder', () => {
         mockProcessFactory(2, "vscode.exe", new Date('1990')),
       ]
       mockPoller.snapshot.mockResolvedValue(firstProcessSnapshot)
-
       await processRecorder.saveSnapshot()
     })
 
@@ -213,7 +229,7 @@ describe('ProcessRecorder', () => {
       await processRecorder.saveSnapshot()
 
       const savedSessions = await db.ProcessSession.findAll()
-      expect(savedSessions.length).toEqual(4)
+      expect(savedSessions).toHaveLength(4)
       expect(savedSessions[0].isActive).toBeFalsy()
       expect(savedSessions[1].isActive).toBeFalsy()
       expect(savedSessions[2].isActive).toBeTruthy()
@@ -234,7 +250,7 @@ describe('ProcessRecorder', () => {
       await processRecorder.saveSnapshot()
 
       const savedSessions = await db.ProcessSession.findAll()
-      expect(savedSessions.length).toEqual(4)
+      expect(savedSessions).toHaveLength(4)
       expect(savedSessions[0].isActive).toBeFalsy()
       expect(savedSessions[1].isActive).toBeFalsy()
       expect(savedSessions[2].isActive).toBeTruthy()

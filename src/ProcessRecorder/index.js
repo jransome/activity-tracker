@@ -69,22 +69,38 @@ const saveSnapshot = async (pollingClient, db) => {
   }
 }
 
+const closeAllSessions = async ({ ProgramSession, ProcessSession }) => {
+  const shutdownDate = new Date
+  await ProcessSession.update({ isActive: false, endTime: shutdownDate }, { where: { isActive: true } })
+  await resolveExpiredProgramSessions(ProgramSession)
+}
+
 export default class ProcessRecorder {
   constructor(pollingClient, dbConnection, interval) {
     this.interval = interval
     this.pollingClient = pollingClient
     this.dbConnection = dbConnection
+    this.isRecording = false
   }
 
   startRecording() {
-    this.tick = setInterval(async () => await this.saveSnapshot(), this.interval)
+    if (!this.isRecording) {
+      this.recordingTimer = setInterval(async () => await this.saveSnapshot(), this.interval)
+      this.isRecording = true
+    }
   }
 
-  stopRecording() {
-    if (this.tick) clearInterval(this.tick)
+  async stopRecording() {
+    this.clearRecordingTimer()
+    await closeAllSessions(this.dbConnection)
+    this.isRecording = false
   }
 
   async saveSnapshot() {
     await saveSnapshot(this.pollingClient, this.dbConnection)
+  }
+
+  clearRecordingTimer() {
+    if (this.recordingTimer) clearInterval(this.recordingTimer)
   }
 }
