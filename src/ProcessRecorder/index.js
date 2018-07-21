@@ -1,3 +1,6 @@
+import queue from 'async/queue'
+import { EventEmitter } from 'events'
+
 const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch) => {
   for (const snapshottedProcess of batch) {
     const [recordedProgram] = await Program.findCreateFind({
@@ -57,7 +60,7 @@ const resolveExpiredProgramSessions = async (ProgramSession) => {
   }
 }
 
-const saveSnapshot = async (pollingClient, db) => {
+const updateActivity = async (pollingClient, db) => {
   const fields = ['pid', 'name', 'path', 'starttime']
   try {
     const processSnapshot = await pollingClient.snapshot(fields)
@@ -75,32 +78,67 @@ const closeAllSessions = async ({ ProgramSession, ProcessSession }) => {
   await resolveExpiredProgramSessions(ProgramSession)
 }
 
-export default class ProcessRecorder {
+// const TESTupdateActivity = () => {
+//   console.log('begining snapshot')
+//   return new Promise((res) => setTimeout(() => res(), 2000))
+// }
+
+// const TESTcloseAllSessions = () => new Promise((res) => setTimeout(() => res(), 200))
+
+export default class ProcessRecorder extends EventEmitter {
   constructor(pollingClient, dbConnection, interval) {
+    super()
     this.interval = interval
     this.pollingClient = pollingClient
     this.dbConnection = dbConnection
     this.isRecording = false
+    this.snapshotQueue = queue(async (task, done) => {
+      await task()
+      done()
+    })
+    this.snapshotCounter = 0
+    this.checkDbNotUnfinalised()
   }
 
   startRecording() {
     if (!this.isRecording) {
-      this.recordingTimer = setInterval(async () => await this.saveSnapshot(), this.interval)
+      this.snapshotScheduler = setInterval(() => this.scheduleSnapshot(), this.interval)
       this.isRecording = true
     }
   }
 
-  async stopRecording() {
-    this.clearRecordingTimer()
-    await closeAllSessions(this.dbConnection)
+  stopRecording() {
+    this.clearSnapshotScheduler()
+    this.scheduleStopRecording()
+  }
+
+  scheduleSnapshot() {
+    if (!this.isRecording) return
+    this.snapshotCounter++
+    const currentSnapshot = this.snapshotCounter
+    const snapshotTask = async () => await updateActivity(this.pollingClient, this.dbConnection)
+    console.log('enqueuing snapshot ' + this.snapshotCounter)
+    this.snapshotQueue.push(snapshotTask, () => console.log(`processed snapshot ${currentSnapshot}`))
+  }
+
+  scheduleStopRecording() {
+    console.log('enqueuing SHUTDOWN')
+    const stopRecordingTask = async () => await closeAllSessions(this.dbConnection)
+    this.snapshotQueue.unshift(stopRecordingTask, () => this.stoppedRecording())
+  }
+
+  stoppedRecording() {
+    this.snapshotQueue.kill()
     this.isRecording = false
+    console.log('processed stop')
+    this.emit('stopped recording')
   }
 
-  async saveSnapshot() {
-    await saveSnapshot(this.pollingClient, this.dbConnection)
+  clearSnapshotScheduler() {
+    if (this.snapshotScheduler) clearInterval(this.snapshotScheduler)
   }
 
-  clearRecordingTimer() {
-    if (this.recordingTimer) clearInterval(this.recordingTimer)
+  checkDbNotUnfinalised() {
+    //TODO: check database on startup to make sure no sessions were left open (ie. application was shutdown correctly)
   }
 }

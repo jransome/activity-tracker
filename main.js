@@ -5,12 +5,26 @@ import ProcessRecorder from './src/ProcessRecorder'
 // listen for processes
 // import processPoller from 'process-list' // this package does not install correctly on mac, commented out when developing on mac
 const processPoller = { snapshot: () => Promise.resolve([]) } // stub for developing on mac
-const processRecorder = new ProcessRecorder(processPoller, dbConnection, 5000)
+const processRecorder = new ProcessRecorder(processPoller, dbConnection, 500)
+
+processRecorder.on('stopped recording', () => console.log('stopped event fired'))
+
 processRecorder.startRecording()
 
 setTimeout(() => {
+  console.log('STOP')
   processRecorder.stopRecording()
 }, 5000)
+
+setTimeout(() => {
+  console.log('STart')
+  processRecorder.startRecording()
+}, 11000)
+
+setTimeout(() => {
+  console.log('STOP')
+  processRecorder.stopRecording()
+}, 15000)
 
 // app
 let mainWindow

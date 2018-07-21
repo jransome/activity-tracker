@@ -5,7 +5,8 @@
     "database": "database_development",
     "storage": "db/db_dev.sqlite3",
     "dialect": "sqlite",
-    "operatorsAliases": false
+    "operatorsAliases": false,
+    "logging": false
   },
   "test": {
     "username": "root",
