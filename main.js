@@ -2,29 +2,39 @@ import { app, BrowserWindow } from 'electron'
 import dbConnection from './src/models'
 import ProcessRecorder from './src/ProcessRecorder'
 
+import fakeProcess from './test/helpers/mockProcess'
 // listen for processes
+const fakeSnapshot = [
+  fakeProcess(1, 'a.exe'),
+  fakeProcess(2, 'b.exe'),
+  fakeProcess(3, 'c.exe'),
+]
+
 // import processPoller from 'process-list' // this package does not install correctly on mac, commented out when developing on mac
-const processPoller = { snapshot: () => Promise.resolve([]) } // stub for developing on mac
+const processPoller = { snapshot: () => Promise.resolve(fakeSnapshot) } // stub for developing on mac
 const processRecorder = new ProcessRecorder(processPoller, dbConnection, 500)
+init()
+function init() {
 
-processRecorder.on('stopped recording', () => console.log('stopped event fired'))
+  processRecorder.on('stopped recording', () => console.log('stopped event fired'))
 
-processRecorder.startRecording()
-
-setTimeout(() => {
-  console.log('STOP')
-  processRecorder.stopRecording()
-}, 5000)
-
-setTimeout(() => {
-  console.log('STart')
   processRecorder.startRecording()
-}, 11000)
 
-setTimeout(() => {
-  console.log('STOP')
-  processRecorder.stopRecording()
-}, 15000)
+  setTimeout(() => {
+    console.log('STOP')
+    processRecorder.stopRecording()
+  }, 5000)
+
+  setTimeout(() => {
+    console.log('STart')
+    processRecorder.startRecording()
+  }, 11000)
+
+  setTimeout(() => {
+    console.log('STOP')
+    processRecorder.stopRecording()
+  }, 15000)
+}
 
 // app
 let mainWindow
@@ -47,7 +57,8 @@ const createWindow = () => {
 
 app.on('ready', createWindow)
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
+  await processRecorder.stopRecording()
   if (process.platform !== 'darwin') app.quit()
 })
 

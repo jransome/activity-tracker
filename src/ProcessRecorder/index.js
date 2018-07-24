@@ -1,5 +1,6 @@
 import queue from 'async/queue'
 import { EventEmitter } from 'events'
+import { resolve } from 'path';
 
 const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch) => {
   for (const snapshottedProcess of batch) {
@@ -107,9 +108,14 @@ export default class ProcessRecorder extends EventEmitter {
     }
   }
 
-  stopRecording() {
-    this.clearSnapshotScheduler()
-    this.scheduleStopRecording()
+  async stopRecording() {
+    try {
+      this.clearSnapshotScheduler()
+      await this.executeStop()
+      this.stoppedRecording()
+    } catch (e) {
+      console.log('Error on stopping recording', e)
+    }
   }
 
   scheduleSnapshot() {
@@ -121,10 +127,14 @@ export default class ProcessRecorder extends EventEmitter {
     this.snapshotQueue.push(snapshotTask, () => console.log(`processed snapshot ${currentSnapshot}`))
   }
 
-  scheduleStopRecording() {
+  async executeStop() {
     console.log('enqueuing SHUTDOWN')
     const stopRecordingTask = async () => await closeAllSessions(this.dbConnection)
-    this.snapshotQueue.unshift(stopRecordingTask, () => this.stoppedRecording())
+    return new Promise((resolve) => {
+      this.snapshotQueue.unshift(stopRecordingTask, () => {
+        resolve()
+      })
+    })
   }
 
   stoppedRecording() {
