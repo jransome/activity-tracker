@@ -1,6 +1,5 @@
 import queue from 'async/queue'
 import { EventEmitter } from 'events'
-import { resolve } from 'path';
 
 const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch) => {
   for (const snapshottedProcess of batch) {
@@ -31,10 +30,10 @@ const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch
   }
 }
 
-const resolveExpiredProcessSessions = async (ProcessSession, snapshot) => {
+const resolveExpiredProcessSessions = async (ProcessSession, snapshot, now) => {
   const storedActiveProcesses = await ProcessSession.findAll({ where: { isActive: true } })
   const processSessionsToClose = findExpiredProcesses(storedActiveProcesses, snapshot)
-  await ProcessSession.update({ isActive: false, endTime: new Date }, { where: { id: processSessionsToClose } })
+  await ProcessSession.update({ isActive: false, endTime: now }, { where: { id: processSessionsToClose } })
 }
 
 const findExpiredProcesses = (storedActiveProcesses, currentSnapshot) => {
@@ -49,25 +48,42 @@ const isStoredProcessNotInSnapshot = (storedProcess, snapshot) => {
     storedProcess.startTime.getTime() === snapshotProcess.starttime.getTime()).length == 0
 }
 
-const resolveExpiredProgramSessions = async (ProgramSession) => {
+const resolveExpiredProgramSessions = async (ProgramSession, now) => {
   const storedActivePrograms = await ProgramSession.findAll({ where: { isActive: true } })
   for (const programSession of storedActivePrograms) {
     const constituentProcesses = await programSession.getProcessSessions({ where: { isActive: true } })
     if (constituentProcesses.length === 0) {
-      const endTime = new Date
-      const duration = endTime - programSession.startTime
-      await programSession.update({ isActive: false, endTime, duration })
+      endProgramSession(programSession, now)
     }
   }
+}
+
+const endProgramSession = async (session, now) => {
+  const duration = now - session.startTime
+  await session.update({ isActive: false, endTime: now, duration })
 }
 
 const updateActivity = async (pollingClient, db) => {
   const fields = ['pid', 'name', 'path', 'starttime']
   try {
+    console.time('take snapshot')
     const processSnapshot = await pollingClient.snapshot(fields)
+    console.timeEnd('take snapshot')
+
+    console.time('record snapshot')
     await recordSnapshot(db, processSnapshot)
-    await resolveExpiredProcessSessions(db.ProcessSession, processSnapshot)
-    await resolveExpiredProgramSessions(db.ProgramSession)
+    console.timeEnd('record snapshot')
+
+    const now = new Date
+
+    console.time('resolve processes')
+    await resolveExpiredProcessSessions(db.ProcessSession, processSnapshot, now)
+    console.timeEnd('resolve processes')
+
+    console.time('resolve PROGRAM')
+    await resolveExpiredProgramSessions(db.ProgramSession, now)
+    console.timeEnd('resolve PROGRAM')
+
   } catch (error) {
     console.log(error)
   }
@@ -76,7 +92,7 @@ const updateActivity = async (pollingClient, db) => {
 const closeAllSessions = async ({ ProgramSession, ProcessSession }) => {
   const shutdownDate = new Date
   await ProcessSession.update({ isActive: false, endTime: shutdownDate }, { where: { isActive: true } })
-  await resolveExpiredProgramSessions(ProgramSession)
+  await resolveExpiredProgramSessions(ProgramSession, shutdownDate)
 }
 
 // const TESTupdateActivity = () => {
@@ -103,8 +119,8 @@ export default class ProcessRecorder extends EventEmitter {
 
   startRecording() {
     if (!this.isRecording) {
-      this.snapshotScheduler = setInterval(() => this.scheduleSnapshot(), this.interval)
       this.isRecording = true
+      this.snapshotScheduler = setInterval(() => this.scheduleSnapshot(), this.interval)
     }
   }
 
@@ -121,7 +137,7 @@ export default class ProcessRecorder extends EventEmitter {
   scheduleSnapshot() {
     if (!this.isRecording) return
     this.snapshotCounter++
-    const currentSnapshot = this.snapshotCounter
+    const currentSnapshot = this.snapshotCounter //temp for logging
     const snapshotTask = async () => await updateActivity(this.pollingClient, this.dbConnection)
     console.log('enqueuing snapshot ' + this.snapshotCounter)
     this.snapshotQueue.push(snapshotTask, () => console.log(`processed snapshot ${currentSnapshot}`))
@@ -140,7 +156,7 @@ export default class ProcessRecorder extends EventEmitter {
   stoppedRecording() {
     this.snapshotQueue.kill()
     this.isRecording = false
-    console.log('processed stop')
+    console.log('processed SHUTDOWN')
     this.emit('stopped recording')
   }
 
@@ -150,5 +166,9 @@ export default class ProcessRecorder extends EventEmitter {
 
   checkDbNotUnfinalised() {
     //TODO: check database on startup to make sure no sessions were left open (ie. application was shutdown correctly)
+  }
+
+  async manualUpdateActivity() {
+    await updateActivity(this.pollingClient, this.dbConnection)
   }
 }

@@ -10,9 +10,9 @@ const fakeSnapshot = [
   fakeProcess(3, 'c.exe'),
 ]
 
-// import processPoller from 'process-list' // this package does not install correctly on mac, commented out when developing on mac
-const processPoller = { snapshot: () => Promise.resolve(fakeSnapshot) } // stub for developing on mac
-const processRecorder = new ProcessRecorder(processPoller, dbConnection, 500)
+import processPoller from 'process-list' // this package does not install correctly on mac, commented out when developing on mac
+// const processPoller = { snapshot: () => Promise.resolve(fakeSnapshot) } // stub for developing on mac
+const processRecorder = new ProcessRecorder(processPoller, dbConnection, 10000)
 init()
 function init() {
 
@@ -20,20 +20,20 @@ function init() {
 
   processRecorder.startRecording()
 
+  // setTimeout(() => {
+  //   console.log('STOP')
+  //   processRecorder.stopRecording()
+  // }, 5000)
+
+  // setTimeout(() => {
+  //   console.log('STart')
+  //   processRecorder.startRecording()
+  // }, 11000)
+
   setTimeout(() => {
     console.log('STOP')
     processRecorder.stopRecording()
-  }, 5000)
-
-  setTimeout(() => {
-    console.log('STart')
-    processRecorder.startRecording()
-  }, 11000)
-
-  setTimeout(() => {
-    console.log('STOP')
-    processRecorder.stopRecording()
-  }, 15000)
+  }, 60000)
 }
 
 // app
@@ -58,7 +58,7 @@ const createWindow = () => {
 app.on('ready', createWindow)
 
 app.on('window-all-closed', async () => {
-  await processRecorder.stopRecording()
+  if (processRecorder.isRecording) await processRecorder.stopRecording()
   if (process.platform !== 'darwin') app.quit()
 })
 

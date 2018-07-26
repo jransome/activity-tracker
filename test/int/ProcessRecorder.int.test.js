@@ -27,7 +27,7 @@ describe('ProcessRecorder', () => {
     })
 
     it('should save programs to the db', async () => {
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const savedPrograms = await db.Program.findAll()
       expect(savedPrograms).toHaveLength(3)
@@ -37,7 +37,7 @@ describe('ProcessRecorder', () => {
     })
 
     it('should save ProgramSessions to the db', async () => {
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const savedSessions = await db.ProgramSession.findAll()
       expect(savedSessions).toHaveLength(3)
@@ -51,7 +51,7 @@ describe('ProcessRecorder', () => {
     })
 
     it('should save ProcessSessions to the db', async () => {
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const savedSessions = await db.ProcessSession.findAll()
       expect(savedSessions).toHaveLength(7)
@@ -89,7 +89,7 @@ describe('ProcessRecorder', () => {
         mockProcessFactory(7, "vscode.exe", new Date('1990')),
       ]
       mockPoller.snapshot.mockResolvedValue(firstProcessSnapshot)
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
     })
 
     it('should treat overlapping ProcessSessions as a single ProgramSession', async () => {
@@ -98,14 +98,14 @@ describe('ProcessRecorder', () => {
         mockProcessFactory(2, "chrome.exe", new Date('1991')),
       ]
       mockPoller.snapshot.mockResolvedValue(secondProcessSnapshot)
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const thirdProcessSnapshot = [
         mockProcessFactory(2, "chrome.exe", new Date('1991')),
         mockProcessFactory(3, "chrome.exe", new Date('1992')),
       ]
       mockPoller.snapshot.mockResolvedValue(thirdProcessSnapshot)
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const fourthProcessSnapshot = [
         mockProcessFactory(3, "chrome.exe", new Date('1992')),
@@ -113,7 +113,7 @@ describe('ProcessRecorder', () => {
       ]
       mockPoller.snapshot.mockResolvedValue(fourthProcessSnapshot)
 
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const chromeProgramSessions = await db.Program.find({ where: { name: "chrome.exe" } }).then(chrome => chrome.getProgramSessions())
       expect(chromeProgramSessions).toHaveLength(1)
@@ -125,7 +125,7 @@ describe('ProcessRecorder', () => {
       ]
       mockPoller.snapshot.mockResolvedValue(secondProcessSnapshot)
 
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const audacityProgramSessions = await db.Program.find({ where: { name: "audacity.exe" } }).then(audacity => audacity.getProgramSessions())
       const savedSessions = await db.ProgramSession.findAll()
@@ -143,7 +143,7 @@ describe('ProcessRecorder', () => {
       ]
       mockPoller.snapshot.mockResolvedValue(secondProcessSnapshot)
 
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const savedSessions = await db.ProgramSession.findAll()
       expect(savedSessions).toHaveLength(4)
@@ -170,7 +170,7 @@ describe('ProcessRecorder', () => {
       ]
       mockPoller.snapshot.mockResolvedValue(secondProcessSnapshot)
 
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const savedSessions = await db.ProcessSession.findAll()
       expect(savedSessions).toHaveLength(7)
@@ -198,7 +198,7 @@ describe('ProcessRecorder', () => {
         mockProcessFactory(2, "vscode.exe", new Date('1990')),
       ]
       mockPoller.snapshot.mockResolvedValue(processSnapshot)
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       await processRecorder.stopRecording()
 
@@ -216,7 +216,7 @@ describe('ProcessRecorder', () => {
         mockProcessFactory(2, "vscode.exe", new Date('1990')),
       ]
       mockPoller.snapshot.mockResolvedValue(firstProcessSnapshot)
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
     })
 
     it('should handle the OS recycling PIDs', async () => {
@@ -226,7 +226,7 @@ describe('ProcessRecorder', () => {
       ]
       mockPoller.snapshot.mockResolvedValue(secondProcessSnapshot)
 
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const savedSessions = await db.ProcessSession.findAll()
       expect(savedSessions).toHaveLength(4)
@@ -247,7 +247,7 @@ describe('ProcessRecorder', () => {
       ]
       mockPoller.snapshot.mockResolvedValue(secondProcessSnapshot)
 
-      await processRecorder.saveSnapshot()
+      await processRecorder.manualUpdateActivity()
 
       const savedSessions = await db.ProcessSession.findAll()
       expect(savedSessions).toHaveLength(4)
