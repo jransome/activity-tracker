@@ -1,7 +1,7 @@
 import queue from 'async/queue'
 import { EventEmitter } from 'events'
 
-const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch) => {
+const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch, now) => {
   for (const snapshottedProcess of batch) {
     const [recordedProgram] = await Program.findCreateFind({
       where: {
@@ -14,7 +14,7 @@ const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch
         ProgramId: recordedProgram.id,
       },
       defaults: {
-        startTime: snapshottedProcess.starttime,
+        startTime: now,
       }
     })
     await ProcessSession.findCreateFind({
@@ -22,9 +22,11 @@ const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch
         pid: snapshottedProcess.pid,
         pidName: snapshottedProcess.pid + snapshottedProcess.name,
         isActive: true,
-        startTime: snapshottedProcess.starttime,
         ProgramId: recordedProgram.id,
         ProgramSessionId: recordedProgramSession.id
+      },
+      defaults: {
+        startTime: now,
       }
     })
   }
@@ -44,8 +46,9 @@ const findExpiredProcesses = (storedActiveProcesses, currentSnapshot) => {
 
 const isStoredProcessNotInSnapshot = (storedProcess, snapshot) => {
   return snapshot.filter((snapshotProcess) =>
-    storedProcess.pidName === (snapshotProcess.pid + snapshotProcess.name) &&
-    storedProcess.startTime.getTime() === snapshotProcess.starttime.getTime()).length == 0
+    storedProcess.pidName === (snapshotProcess.pid + snapshotProcess.name)// &&
+    // storedProcess.startTime.getTime() === snapshotProcess.starttime.getTime()
+  ).length == 0
 }
 
 const resolveExpiredProgramSessions = async (ProgramSession, now) => {
@@ -53,7 +56,7 @@ const resolveExpiredProgramSessions = async (ProgramSession, now) => {
   for (const programSession of storedActivePrograms) {
     const constituentProcesses = await programSession.getProcessSessions({ where: { isActive: true } })
     if (constituentProcesses.length === 0) {
-      endProgramSession(programSession, now)
+      await endProgramSession(programSession, now)
     }
   }
 }
@@ -66,24 +69,23 @@ const endProgramSession = async (session, now) => {
 }
 
 const updateActivity = async (pollingClient, db) => {
-  const fields = ['pid', 'name', 'path', 'starttime']
+  const fields = ['pid', 'name', 'path']
+  const timeStamp = new Date()
   try {
     console.time('take snapshot')
     const processSnapshot = await pollingClient.snapshot(fields)
     console.timeEnd('take snapshot')
 
     console.time('record snapshot')
-    await recordSnapshot(db, processSnapshot)
+    await recordSnapshot(db, processSnapshot, timeStamp)
     console.timeEnd('record snapshot')
 
-    const now = new Date
-
     console.time('resolve processes')
-    await resolveExpiredProcessSessions(db.ProcessSession, processSnapshot, now)
+    await resolveExpiredProcessSessions(db.ProcessSession, processSnapshot, timeStamp)
     console.timeEnd('resolve processes')
 
     console.time('resolve PROGRAM')
-    await resolveExpiredProgramSessions(db.ProgramSession, now)
+    await resolveExpiredProgramSessions(db.ProgramSession, timeStamp)
     console.timeEnd('resolve PROGRAM')
 
   } catch (error) {
