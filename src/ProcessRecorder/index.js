@@ -61,6 +61,8 @@ const resolveExpiredProgramSessions = async (ProgramSession, now) => {
 const endProgramSession = async (session, now) => {
   const duration = now - session.startTime
   await session.update({ isActive: false, endTime: now, duration })
+  const program = await session.getProgram()
+  await program.update({ upTime: program.upTime += duration })
 }
 
 const updateActivity = async (pollingClient, db) => {
