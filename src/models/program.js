@@ -1,6 +1,7 @@
 export default (sequelize, DataTypes) => {
   const Program = sequelize.define('Program', {
-    name: DataTypes.STRING
+    name: DataTypes.STRING,
+    upTime: DataTypes.INTEGER
   }, {})
 
   Program.associate = (models) => {
