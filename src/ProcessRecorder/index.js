@@ -1,13 +1,18 @@
 import queue from 'async/queue'
 import { EventEmitter } from 'events'
 
-const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch, now) => {
+const recordSnapshot = async ({ Snapshot, Program, ProgramSession, ProcessSession }, batch, now) => {
+  await Snapshot.create({
+    takenAt: now
+  })
+
   for (const snapshottedProcess of batch) {
     const [recordedProgram] = await Program.findCreateFind({
       where: {
         name: snapshottedProcess.name
       }
     })
+
     const [recordedProgramSession] = await ProgramSession.findCreateFind({
       where: {
         isActive: true,
@@ -17,6 +22,7 @@ const recordSnapshot = async ({ Program, ProgramSession, ProcessSession }, batch
         startTime: now,
       }
     })
+
     await ProcessSession.findCreateFind({
       where: {
         pid: snapshottedProcess.pid,
@@ -72,6 +78,8 @@ const updateActivity = async (pollingClient, db) => {
   const fields = ['pid', 'name', 'path']
   const timeStamp = new Date()
   try {
+    console.log('==========start===========')
+
     console.time('take snapshot')
     const processSnapshot = await pollingClient.snapshot(fields)
     console.timeEnd('take snapshot')
@@ -88,23 +96,16 @@ const updateActivity = async (pollingClient, db) => {
     await resolveExpiredProgramSessions(db.ProgramSession, timeStamp)
     console.timeEnd('resolve PROGRAM')
 
+    console.log('==========stop===========')
   } catch (error) {
     console.log(error)
   }
 }
 
-const closeAllSessions = async ({ ProgramSession, ProcessSession }) => {
-  const shutdownDate = new Date
+const closeAllSessions = async ({ ProgramSession, ProcessSession }, shutdownDate = new Date) => {
   await ProcessSession.update({ isActive: false, endTime: shutdownDate }, { where: { isActive: true } })
   await resolveExpiredProgramSessions(ProgramSession, shutdownDate)
 }
-
-// const TESTupdateActivity = () => {
-//   console.log('begining snapshot')
-//   return new Promise((res) => setTimeout(() => res(), 2000))
-// }
-
-// const TESTcloseAllSessions = () => new Promise((res) => setTimeout(() => res(), 200))
 
 export default class ProcessRecorder extends EventEmitter {
   constructor(pollingClient, dbConnection, interval) {
@@ -118,10 +119,13 @@ export default class ProcessRecorder extends EventEmitter {
       done()
     })
     this.snapshotCounter = 0
-    this.checkDbNotUnfinalised()
   }
 
-  startRecording() {
+  async startRecording() {
+    console.time('checkDbClosedGracefully')
+    await this.checkDbClosedGracefully()
+    console.timeEnd('checkDbClosedGracefully')
+
     if (!this.isRecording) {
       this.isRecording = true
       this.snapshotScheduler = setInterval(() => this.scheduleSnapshot(), this.interval)
@@ -152,13 +156,13 @@ export default class ProcessRecorder extends EventEmitter {
     const stopRecordingTask = async () => await closeAllSessions(this.dbConnection)
     return new Promise((resolve) => {
       this.snapshotQueue.unshift(stopRecordingTask, () => {
+        this.snapshotQueue.kill()
         resolve()
       })
     })
   }
 
   stoppedRecording() {
-    this.snapshotQueue.kill()
     this.isRecording = false
     console.log('processed SHUTDOWN')
     this.emit('stopped recording')
@@ -168,8 +172,14 @@ export default class ProcessRecorder extends EventEmitter {
     if (this.snapshotScheduler) clearInterval(this.snapshotScheduler)
   }
 
-  checkDbNotUnfinalised() {
-    //TODO: check database on startup to make sure no sessions were left open (ie. application was shutdown correctly)
+  async checkDbClosedGracefully() {
+    const lastSnapshot = await this.dbConnection.Snapshot.findOne({ order: [['createdAt', 'DESC']], raw: true })
+    
+    if (lastSnapshot) {
+      const lastSnapshotTime = new Date(lastSnapshot.takenAt)
+      const extrapolatedShutdownTime = new Date(lastSnapshotTime.getTime() + 1)
+      await closeAllSessions(this.dbConnection, extrapolatedShutdownTime)
+    }
   }
 
   async manualUpdateActivity() {
