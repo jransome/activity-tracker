@@ -1,7 +1,12 @@
 const { spawn } = require("child_process");
 
-const registerEventsScript = './register-events.ps1 \n';
-const unregisterEventsScript = './unregister-events.ps1 \n';
+const startEventIdentifier = 'startevent'
+const stopEventIdentifier = 'stopevent'
+
+const psScriptsDir = './src/powershell';
+const psScriptArgs = `-StartEventIdentifier ${startEventIdentifier} -StopEventIdentifier ${stopEventIdentifier}`
+const registerEventsScript = `${psScriptsDir}/register-events.ps1 ${psScriptArgs}\n`;
+const unregisterEventsScript = `${psScriptsDir}/unregister-events.ps1 ${psScriptArgs}\n`;
 
 const args = ['-ExecutionPolicy', 'Unrestricted', '-NoLogo', '-NoExit', '-InputFormat', 'Text', '-Command', '-'];
 
@@ -10,6 +15,10 @@ const child = spawn('powershell.exe', args);
 child.stdin.setEncoding('utf-8');
 
 child.stdin.write(registerEventsScript);
+
+setTimeout(function () {
+  child.stdin.write(unregisterEventsScript);
+}, 10000)
 
 child.stdout.on("data", function (data) {
   console.log("Powershell Data: " + data);

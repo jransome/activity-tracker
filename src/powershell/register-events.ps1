@@ -1,3 +1,8 @@
+param(
+    [Parameter(Mandatory=$true)][string]$StartEventIdentifier,
+    [Parameter(Mandatory=$true)][string]$StopEventIdentifier
+)
+
 Register-WMIEvent -query "SELECT * FROM Win32_ProcessStartTrace" -SourceIdentifier "startevent" -action { 
     $e = $Event.SourceEventArgs.NewEvent 
     Write-Host $e.ProcessName,"started" 
