@@ -1,12 +1,15 @@
 import { app, BrowserWindow } from 'electron'
 import dbConnection from './src/models'
+import ProcessListener from './src/ProcessListener'
 import Recorder from './src/Recorder'
 
 // listen for processes
 
 import processPoller from 'process-list' // this package does not install correctly on mac, commented out when developing on mac
 // const processPoller = { snapshot: () => Promise.resolve(fakeSnapshot) } // stub for developing on mac
-const recorder = new Recorder(processPoller, dbConnection, 10000)
+
+const processListener = new ProcessListener()
+const recorder = new Recorder(processPoller, processListener, dbConnection)
 init()
 function init() {
 
@@ -14,20 +17,20 @@ function init() {
 
   recorder.startRecording()
 
-  setTimeout(() => {
-    console.log('STOP')
-    stopRecording()
-  }, 5000)
+  // setTimeout(() => {
+  //   console.log('STOP')
+  //   stopRecording()
+  // }, 5000)
 
-  setTimeout(() => {
-    console.log('start againg')
-    recorder.startRecording()
-  }, 45000)
+  // setTimeout(() => {
+  //   console.log('start againg')
+  //   recorder.startRecording()
+  // }, 45000)
 
-  setTimeout(() => {
-    console.log('STOP again')
-    stopRecording()
-  }, 60000)
+  // setTimeout(() => {
+  //   console.log('STOP again')
+  //   stopRecording()
+  // }, 60000)
 }
 
 async function stopRecording() {

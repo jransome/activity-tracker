@@ -2,17 +2,20 @@ import queue from 'async/queue'
 import { EventEmitter } from 'events'
 
 export default class Recorder extends EventEmitter {
-  constructor(pollingClient, dbConnection, processListener) {
+  constructor(pollingClient, processListener, dbConnection) {
     super()
     this.pollingClient = pollingClient
     this.dbConnection = dbConnection
-    this.processListener = processListener
     this.isRecording = false
     this.shuttingDown = false
     this.shutdownPromise = null
     this.jobQueue = queue(async (task, done) => {
       await task()
       done()
+    })
+
+    processListener.on('process-event', (processEvent) => {
+      if (this.isRecording) this._enqueueTraceUpdate(processEvent)
     })
   }
 
@@ -25,25 +28,65 @@ export default class Recorder extends EventEmitter {
   }
 
   async stopRecording() {
-    if (this.isRecording) {
-      if (!this.shuttingDown) {
-        try {
-          this.shuttingDown = true
-          this.shutdownPromise = this._triggerShutdown()
-          await this.shutdownPromise
-          this.shuttingDown = false
-          this.isRecording = false
-          this.emit('stopped_recording')
-          console.log('processed SHUTDOWN')
-        } catch (e) {
-          console.log('Error on stopping recording', e)
-        }
-      } 
-      return this.shutdownPromise
+    if (!this.isRecording) return
+    if (!this.shuttingDown) {
+      try {
+        this.shuttingDown = true
+        this.shutdownPromise = this._triggerShutdown()
+        await this.shutdownPromise
+        this.shuttingDown = false
+        this.isRecording = false
+        this.emit('stopped_recording')
+        console.log('processed SHUTDOWN')
+      }
+      catch (e) {
+        console.log('Error on stopping recording', e)
+      }
     }
+    return this.shutdownPromise
   }
 
   // 'private'
+
+  _enqueueTraceUpdate(processEvent) {
+    const updateTask = async () => await this._traceHandler(processEvent)
+    this.jobQueue.push(updateTask, () => console.log('processed trace event:', processEvent.type, processEvent.processName))
+  }
+
+  async _traceHandler({ type, pid, processName, timeCreated }) {
+    const now = new Date()
+    const { Program, ProgramSession, ProcessSession } = this.dbConnection
+
+    if (type === "startTrace") {
+      const [program] = await Program.findCreateFind({
+        where: {
+          name: processName,
+        }
+      })
+
+      const [programSession] = await ProgramSession.findCreateFind({
+        where: {
+          isActive: true,
+          ProgramId: program.id,
+        },
+        defaults: {
+          startTime: now,
+        }
+      })
+
+      await ProcessSession.create({
+        pid: pid,
+        pidName: pid + processName,
+        isActive: true,
+        ProgramId: program.id,
+        ProgramSessionId: programSession.id,
+        startTime: now,
+      })
+    }
+    else if (type === "stopTrace") {
+
+    }
+  }
 
   _enqueueSnapshot() { //TODO pull out enqueuing logic
     console.log('enqueuing SNAPSHOT')
@@ -60,15 +103,15 @@ export default class Recorder extends EventEmitter {
   async _recordSnapshot(batch, now) {
     const { Program, ProgramSession, ProcessSession } = this.dbConnection
     for (const snapshottedProcess of batch) {
-      const [recordedProgram] = await Program.findCreateFind({
+      const [program] = await Program.findCreateFind({
         where: {
           name: snapshottedProcess.name,
         }
       })
 
-      const recordedProgramSession = await ProgramSession.create({
+      const programSession = await ProgramSession.create({
         isActive: true,
-        ProgramId: recordedProgram.id,
+        ProgramId: program.id,
         startTime: now,
       })
 
@@ -76,8 +119,8 @@ export default class Recorder extends EventEmitter {
         pid: snapshottedProcess.pid,
         pidName: snapshottedProcess.pid + snapshottedProcess.name,
         isActive: true,
-        ProgramId: recordedProgram.id,
-        ProgramSessionId: recordedProgramSession.id,
+        ProgramId: program.id,
+        ProgramSessionId: programSession.id,
         startTime: now,
       })
     }

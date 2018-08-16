@@ -5,10 +5,10 @@ param(
 function global:Convert-EventToJson {
     param($Type, $TraceEvent)
     [hashtable]$eventObj = @{}
-    $eventObj.Type = $Type
-    $eventObj.ProcessID = $TraceEvent.ProcessID
-    $eventObj.ProcessName = $TraceEvent.ProcessName
-    $eventObj.TimeCreated = $TraceEvent.TIME_CREATED
+    $eventObj.type = $Type
+    $eventObj.pid = $TraceEvent.ProcessID
+    $eventObj.processName = $TraceEvent.ProcessName
+    $eventObj.timeCreated = $TraceEvent.TIME_CREATED
 
     $json = $eventObj | ConvertTo-Json -Compress
     Write-Host $json

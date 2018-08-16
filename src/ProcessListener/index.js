@@ -1,7 +1,7 @@
 const { spawn } = require('child_process')
 const { EventEmitter } = require('events')
 
-class ProcessListener extends EventEmitter {
+export default class ProcessListener extends EventEmitter {
   constructor() {
     super()
     const encoding = 'utf8' // encoding for strings not buffers (as is default)
@@ -32,7 +32,7 @@ class ProcessListener extends EventEmitter {
         const event = JSON.parse(data)
         this.emit('process-event', event)
       } catch (error) {
-        console.log('Non JSON PS output handled')
+        // console.log('Non JSON PS output handled')
       }
     })
 
@@ -49,9 +49,7 @@ class ProcessListener extends EventEmitter {
   }
 }
 
-export default ProcessListener
-
-const listener = new ProcessListener()
+// const listener = new ProcessListener()
 
 // listener.on('process-event', (event) => {
 //   // console.log("Process event: " + event)
