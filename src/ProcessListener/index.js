@@ -1,5 +1,5 @@
-const { spawn } = require('child_process')
-const { EventEmitter } = require('events')
+import { spawn } from 'child_process'
+import { EventEmitter } from 'events'
 
 export default class ProcessListener extends EventEmitter {
   constructor() {
@@ -48,19 +48,3 @@ export default class ProcessListener extends EventEmitter {
     })
   }
 }
-
-// const listener = new ProcessListener()
-
-// listener.on('process-event', (event) => {
-//   // console.log("Process event: " + event)
-//   console.log("Process event: " + JSON.stringify(event))
-// })
-
-// listener.on('powershell-error', (data) => {
-//   console.log("Powershell Error: " + data)
-// })
-
-// setTimeout(() => {
-//   console.log('stopping listener')
-//   listener.stop()
-// }, 10000)
