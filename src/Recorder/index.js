@@ -15,7 +15,8 @@ export default class Recorder extends EventEmitter {
     })
 
     processListener.on('process-event', (processEvent) => {
-      if (this.isRecording) this._enqueueTraceUpdate(processEvent)
+      if (processEvent.processName === 'git.exe' || processEvent.processName === 'conhost.exe') return// TO DELETE
+      if (this.isRecording && !this.shuttingDown) this._enqueueTraceUpdate(processEvent)
     })
   }
 
@@ -49,6 +50,7 @@ export default class Recorder extends EventEmitter {
   // 'private'
 
   _enqueueTraceUpdate(processEvent) {
+    console.log('enqueuing TRACE_UPDATE for', processEvent.processName, processEvent.type)
     const updateTask = async () => await this._traceHandler(processEvent)
     this.jobQueue.push(updateTask, () => console.log('processed trace event:', processEvent.type, processEvent.processName))
   }
@@ -58,25 +60,21 @@ export default class Recorder extends EventEmitter {
     const { Program, ProgramSession, ProcessSession } = this.dbConnection
 
     if (type === "startTrace") {
-      const [program] = await Program.findCreateFind({
-        where: {
-          name: processName,
-        }
-      })
+      console.log('start trace detected for:', processName)
+      const [program] = await Program.findCreateFind({ where: { name: processName } })
+      await program.update({ isActive: true })
 
       const [programSession] = await ProgramSession.findCreateFind({
         where: {
           isActive: true,
           ProgramId: program.id,
         },
-        defaults: {
-          startTime: now,
-        }
+        defaults: { startTime: now }
       })
 
       await ProcessSession.create({
         pid: pid,
-        pidName: pid + processName,
+        name: processName,
         isActive: true,
         ProgramId: program.id,
         ProgramSessionId: programSession.id,
@@ -84,7 +82,32 @@ export default class Recorder extends EventEmitter {
       })
     }
     else if (type === "stopTrace") {
+      console.log('stop trace detected for:', processName)
+      try {
+        const rowsUpdated = await ProcessSession.update(
+          { isActive: false, endTime: now },
+          { where: { pid, name: processName, isActive: true } }
+        )
+        if (rowsUpdated === 0) throw new Error('Stop trace received for unrecorded process session: ' + processName)
+        if (rowsUpdated > 1) throw new Error('Duplicate process sessions updated on stop trace: ' + processName)
 
+        const program = await Program.findOne({ where: { name: processName } })
+        if (!program) throw new Error('Stop trace received for unrecorded program: ' + processName)
+
+        const remainingSessions = await program.getProcessSessions({ where: { isActive: true } })
+
+        if (remainingSessions.length > 0) return
+
+        const [programSession] = await program.getProgramSessions({ where: { isActive: true } })
+        const duration = now - programSession.startTime
+        await programSession.update({ isActive: false, endTime: now, duration })
+        await program.update({ upTime: program.upTime += duration })
+        console.log('Last process session for '+ processName + ' finished')
+      } catch (error) {
+        console.log('='.repeat(50))
+        console.error('ERROR:', error)
+        console.log('='.repeat(50))
+      }
     }
   }
 
@@ -104,20 +127,21 @@ export default class Recorder extends EventEmitter {
     const { Program, ProgramSession, ProcessSession } = this.dbConnection
     for (const snapshottedProcess of batch) {
       const [program] = await Program.findCreateFind({
-        where: {
-          name: snapshottedProcess.name,
-        }
+        where: { name: snapshottedProcess.name }
       })
+      program.update({ isActive: true })
 
-      const programSession = await ProgramSession.create({
-        isActive: true,
-        ProgramId: program.id,
-        startTime: now,
+      const [programSession] = await ProgramSession.findCreateFind({
+        where: {
+          isActive: true,
+          ProgramId: program.id,
+        },
+        defaults: { startTime: now }
       })
 
       await ProcessSession.create({
         pid: snapshottedProcess.pid,
-        pidName: snapshottedProcess.pid + snapshottedProcess.name,
+        name: snapshottedProcess.name,
         isActive: true,
         ProgramId: program.id,
         ProgramSessionId: programSession.id,

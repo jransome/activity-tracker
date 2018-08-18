@@ -13,8 +13,8 @@ module.exports = {
         type: Sequelize.INTEGER,
         references: {
           allowNull: false,
-          model: 'Programs', 
-          key: 'id', 
+          model: 'Programs',
+          key: 'id',
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
@@ -23,8 +23,8 @@ module.exports = {
         type: Sequelize.INTEGER,
         references: {
           allowNull: false,
-          model: 'ProgramSessions', 
-          key: 'id', 
+          model: 'ProgramSessions',
+          key: 'id',
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
@@ -32,7 +32,10 @@ module.exports = {
       pid: {
         type: Sequelize.INTEGER
       },
-      pidName:{
+      name: {
+        type: Sequelize.STRING
+      },
+      pidName: {
         type: Sequelize.STRING
       },
       isActive: {
