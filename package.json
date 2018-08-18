@@ -14,10 +14,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "active-win": "^3.0.0",
     "async": "^2.6.1",
     "electron": "^2.0.3",
-    "powershell": "^2.3.0",
     "process-list": "^1.2.3",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
