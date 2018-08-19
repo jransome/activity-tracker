@@ -9,7 +9,7 @@
     "db:clean": "node_modules/.bin/sequelize db:migrate:undo:all && npm run db:migrate",
     "db:destroy": "rm db/*.sqlite3*",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
-    "test": "NODE_ENV=test npm run db:clean && jest"
+    "test": "npm run db:clean && jest"
   },
   "author": "",
   "license": "ISC",

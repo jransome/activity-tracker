@@ -113,14 +113,16 @@ export default class Recorder extends EventEmitter {
 
   _enqueueSnapshot() { //TODO pull out enqueuing logic
     console.log('enqueuing SNAPSHOT')
-    const snapshotTask = async () => {
-      const fields = ['pid', 'name', 'path'] // TODO: use path?
-      const timeStamp = new Date()
-
-      const snapshot = await this.pollingClient.snapshot(fields)
-      await this._recordSnapshot(snapshot, timeStamp)
-    }
-    this.jobQueue.push(snapshotTask, () => console.log('processed initial snapshot'))
+    return new Promise (resolve => { // <= used only for testing :/
+      const snapshotTask = async () => {
+        const fields = ['pid', 'name', 'path'] // TODO: use path?
+        const timeStamp = new Date()
+  
+        const snapshot = await this.pollingClient.snapshot(fields)
+        await this._recordSnapshot(snapshot, timeStamp)
+      }
+      this.jobQueue.push(snapshotTask, () => console.log('processed initial snapshot') || resolve())
+    })
   }
 
   async _recordSnapshot(batch, now) {
