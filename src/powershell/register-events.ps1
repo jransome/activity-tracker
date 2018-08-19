@@ -8,7 +8,7 @@ function global:Convert-EventToJson {
     $eventObj.type = $Type
     $eventObj.pid = $TraceEvent.ProcessID
     $eventObj.processName = $TraceEvent.ProcessName
-    $eventObj.timeCreated = $TraceEvent.TIME_CREATED
+    $eventObj.timeCreated = $TraceEvent.TIME_CREATED # unused
 
     $json = $eventObj | ConvertTo-Json -Compress
     Write-Host $json

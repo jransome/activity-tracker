@@ -19,6 +19,12 @@ describe('Recorder', () => {
     })
   }
 
+  const getAllfromDb = async () => ({
+    processSessions: await db.ProcessSession.findAll(),
+    programSessions: await db.ProgramSession.findAll(),
+    programs: await db.Program.findAll(),
+  })
+
   beforeEach(async () => {
     await purgeDb(db)
   })
@@ -32,16 +38,16 @@ describe('Recorder', () => {
 
     beforeAll(() => {
       dateHelper.stubDate(date)
-      const firstProcessSnapshot = [
-        mockProcessFactory(1, "chrome.exe"),
-        mockProcessFactory(2, "chrome.exe"),
-        mockProcessFactory(3, "audacity.exe"),
-        mockProcessFactory(4, "vscode.exe"),
-        mockProcessFactory(5, "vscode.exe"),
-        mockProcessFactory(6, "chrome.exe"),
-        mockProcessFactory(7, "vscode.exe"),
+      const processSnapshot = [
+        mockProcessFactory(1, 'chrome.exe'),
+        mockProcessFactory(2, 'chrome.exe'),
+        mockProcessFactory(3, 'audacity.exe'),
+        mockProcessFactory(4, 'vscode.exe'),
+        mockProcessFactory(5, 'vscode.exe'),
+        mockProcessFactory(6, 'chrome.exe'),
+        mockProcessFactory(7, 'vscode.exe'),
       ]
-      mockPoller.snapshot.mockResolvedValue(firstProcessSnapshot)
+      mockPoller.snapshot.mockResolvedValue(processSnapshot)
     })
 
     it('should save programs to the db', async () => {
@@ -49,9 +55,9 @@ describe('Recorder', () => {
 
       const savedPrograms = await db.Program.findAll()
       expect(savedPrograms).toHaveLength(3)
-      expect(savedPrograms[0].name).toEqual("chrome.exe")
-      expect(savedPrograms[1].name).toEqual("audacity.exe")
-      expect(savedPrograms[2].name).toEqual("vscode.exe")
+      expect(savedPrograms[0].name).toEqual('chrome.exe')
+      expect(savedPrograms[1].name).toEqual('audacity.exe')
+      expect(savedPrograms[2].name).toEqual('vscode.exe')
     })
 
     it('should save ProgramSessions to the db', async () => {
@@ -59,9 +65,9 @@ describe('Recorder', () => {
 
       const savedSessions = await db.ProgramSession.findAll()
       expect(savedSessions).toHaveLength(3)
-      expect((await savedSessions[0].getProgram()).name).toEqual("chrome.exe")
-      expect((await savedSessions[1].getProgram()).name).toEqual("audacity.exe")
-      expect((await savedSessions[2].getProgram()).name).toEqual("vscode.exe")
+      expect((await savedSessions[0].getProgram()).name).toEqual('chrome.exe')
+      expect((await savedSessions[1].getProgram()).name).toEqual('audacity.exe')
+      expect((await savedSessions[2].getProgram()).name).toEqual('vscode.exe')
       savedSessions.forEach((session) => {
         expect(session.isActive).toBeTruthy()
         expect(session.startTime).toEqual(date)
@@ -73,13 +79,13 @@ describe('Recorder', () => {
 
       const savedSessions = await db.ProcessSession.findAll()
       expect(savedSessions).toHaveLength(7)
-      expect((await savedSessions[0].getProgram()).name).toEqual("chrome.exe")
-      expect((await savedSessions[1].getProgram()).name).toEqual("chrome.exe")
-      expect((await savedSessions[2].getProgram()).name).toEqual("audacity.exe")
-      expect((await savedSessions[3].getProgram()).name).toEqual("vscode.exe")
-      expect((await savedSessions[4].getProgram()).name).toEqual("vscode.exe")
-      expect((await savedSessions[5].getProgram()).name).toEqual("chrome.exe")
-      expect((await savedSessions[6].getProgram()).name).toEqual("vscode.exe")
+      expect((await savedSessions[0].getProgram()).name).toEqual('chrome.exe')
+      expect((await savedSessions[1].getProgram()).name).toEqual('chrome.exe')
+      expect((await savedSessions[2].getProgram()).name).toEqual('audacity.exe')
+      expect((await savedSessions[3].getProgram()).name).toEqual('vscode.exe')
+      expect((await savedSessions[4].getProgram()).name).toEqual('vscode.exe')
+      expect((await savedSessions[5].getProgram()).name).toEqual('chrome.exe')
+      expect((await savedSessions[6].getProgram()).name).toEqual('vscode.exe')
       expect(savedSessions[0].ProgramSessionId).toEqual(1)
       expect(savedSessions[1].ProgramSessionId).toEqual(1)
       expect(savedSessions[2].ProgramSessionId).toEqual(2)
@@ -95,15 +101,134 @@ describe('Recorder', () => {
     })
   })
 
-  describe('saving process traces', () => { 
-    // TODO
+  describe('saving process traces', () => {
+    it('records start traces for previously unrecorded programs', async () => {
+      const pid = 1
+      const processName = 'abc.exe'
+      const timeStamp = new Date('1990')
+      const startTrace = { type: 'startTrace', pid, processName, timeStamp }
+      await recorder._enqueueTraceUpdate(startTrace)
+
+      const { processSessions, programSessions, programs } = await getAllfromDb()
+      expect(processSessions).toHaveLength(1)
+      expect(programSessions).toHaveLength(1)
+      expect(programs).toHaveLength(1)
+
+      expect((await processSessions[0].getProgram()).name).toEqual(processName)
+      expect(processSessions[0].isActive).toBeTruthy()
+      expect(processSessions[0].startTime).toEqual(timeStamp)
+      expect(processSessions[0].ProgramSessionId).toEqual(1)
+      expect(processSessions[0].pid).toEqual(pid)
+
+      expect((await programSessions[0].getProgram()).name).toEqual(processName)
+      expect(programSessions[0].isActive).toBeTruthy()
+      expect(programSessions[0].startTime).toEqual(timeStamp)
+
+      expect(programs[0].name).toEqual(processName)
+    })
+
+    it('records start traces for already active programs', async () => {
+      const processName = 'abc.exe'
+      const previousStartTrace = { type: 'startTrace', pid: 1, processName, timeStamp: new Date('1990') }
+      await recorder._enqueueTraceUpdate(previousStartTrace)
+
+      const startTrace = { type: 'startTrace', pid: 2, processName, timeStamp: new Date('1991') }
+      await recorder._enqueueTraceUpdate(startTrace)
+
+      const { processSessions, programSessions, programs } = await getAllfromDb()
+      expect(processSessions).toHaveLength(2)
+      expect(programSessions).toHaveLength(1)
+      expect(programs).toHaveLength(1)
+
+      expect((await processSessions[0].getProgram()).name).toEqual(processName)
+      expect(processSessions[0].isActive).toBeTruthy()
+      expect(processSessions[0].startTime).toEqual(previousStartTrace.timeStamp)
+      expect(processSessions[0].ProgramSessionId).toEqual(1)
+      expect(processSessions[0].pid).toEqual(previousStartTrace.pid)
+
+      expect((await processSessions[1].getProgram()).name).toEqual(processName)
+      expect(processSessions[1].isActive).toBeTruthy()
+      expect(processSessions[1].startTime).toEqual(startTrace.timeStamp)
+      expect(processSessions[1].ProgramSessionId).toEqual(1)
+      expect(processSessions[1].pid).toEqual(startTrace.pid)
+
+      expect((await programSessions[0].getProgram()).name).toEqual(processName)
+      expect(programSessions[0].isActive).toBeTruthy()
+      expect(programSessions[0].startTime).toEqual(previousStartTrace.timeStamp)
+
+      expect(programs[0].name).toEqual(processName)
+    })
+
+    it('records the last stop trace for an active program', async () => {
+      const processName = 'abc.exe'
+      const pid = 1
+      const previousStartTrace = { type: 'startTrace', pid, processName, timeStamp: new Date('1990') }
+      await recorder._enqueueTraceUpdate(previousStartTrace)
+
+      const stopTrace = { type: 'stopTrace', pid, processName, timeStamp: new Date('1991') }
+      const duration = stopTrace.timeStamp - previousStartTrace.timeStamp
+      await recorder._enqueueTraceUpdate(stopTrace)
+
+      const { processSessions, programSessions, programs } = await getAllfromDb()
+      expect(processSessions).toHaveLength(1)
+      expect(programSessions).toHaveLength(1)
+      expect(programs).toHaveLength(1)
+
+      expect((await processSessions[0].getProgram()).name).toEqual(processName)
+      expect(processSessions[0].isActive).toBeFalsy()
+      expect(processSessions[0].startTime).toEqual(previousStartTrace.timeStamp)
+      expect(processSessions[0].endTime).toEqual(stopTrace.timeStamp)
+      expect(processSessions[0].ProgramSessionId).toEqual(1)
+      expect(processSessions[0].pid).toEqual(pid)
+
+      expect((await programSessions[0].getProgram()).name).toEqual(processName)
+      expect(programSessions[0].isActive).toBeFalsy()
+      expect(programSessions[0].startTime).toEqual(previousStartTrace.timeStamp)
+      expect(programSessions[0].endTime).toEqual(stopTrace.timeStamp)
+      expect(programSessions[0].duration).toEqual(duration)
+
+      expect(programs[0].name).toEqual(processName)
+      expect(programs[0].upTime).toEqual(duration)
+    })
+
+    it('records stop traces for an active program that is still running', async () => {
+      const processName = 'abc.exe'
+      const firstProcessStart = { type: 'startTrace', pid: 1, processName, timeStamp: new Date('1990') }
+      const secondProcessStart = { type: 'startTrace', pid: 2, processName, timeStamp: new Date('1991') }
+      await recorder._enqueueTraceUpdate(firstProcessStart)
+      await recorder._enqueueTraceUpdate(secondProcessStart)
+      
+      const firstProcessStop = { type: 'stopTrace', pid: 1, processName, timeStamp: new Date('1992') }
+      await recorder._enqueueTraceUpdate(firstProcessStop)
+
+      const { processSessions, programSessions, programs } = await getAllfromDb()
+      expect(processSessions).toHaveLength(2)
+      expect(programSessions).toHaveLength(1)
+      expect(programs).toHaveLength(1)
+
+      expect((await processSessions[0].getProgram()).name).toEqual(processName)
+      expect(processSessions[0].isActive).toBeFalsy()
+      expect(processSessions[0].startTime).toEqual(firstProcessStart.timeStamp)
+      expect(processSessions[0].endTime).toEqual(firstProcessStop.timeStamp)
+      expect(processSessions[0].ProgramSessionId).toEqual(1)
+      expect(processSessions[0].pid).toEqual(1)
+
+      expect((await programSessions[0].getProgram()).name).toEqual(processName)
+      expect(programSessions[0].isActive).toBeTruthy()
+      expect(programSessions[0].startTime).toEqual(firstProcessStart.timeStamp)
+      expect(programSessions[0].endTime).toBeNull()
+      expect(programSessions[0].duration).toBeNull()
+
+      expect(programs[0].name).toEqual(processName)
+      expect(programs[0].upTime).toBeNull()
+    })
   })
 
   describe('shutting down', () => {
     it('closes all open sessions when recording stops', async () => {
       const processSnapshot = [
-        mockProcessFactory(1, "chrome.exe"),
-        mockProcessFactory(2, "vscode.exe"),
+        mockProcessFactory(1, 'chrome.exe'),
+        mockProcessFactory(2, 'vscode.exe'),
       ]
       mockPoller.snapshot.mockResolvedValue(processSnapshot)
 
@@ -121,8 +246,8 @@ describe('Recorder', () => {
   //   beforeEach(async () => {
   //     dateHelper.stubDate(new Date('1990'))
   //     const firstProcessSnapshot = [
-  //       mockProcessFactory(1, "chrome.exe"),
-  //       mockProcessFactory(2, "vscode.exe"),
+  //       mockProcessFactory(1, 'chrome.exe'),
+  //       mockProcessFactory(2, 'vscode.exe'),
   //     ]
   //     mockPoller.snapshot.mockResolvedValue(firstProcessSnapshot)
   //     await recorder.manualUpdateActivity()
@@ -132,8 +257,8 @@ describe('Recorder', () => {
   //     const secondSnapshotDate = new Date('1991')
   //     dateHelper.stubDate(secondSnapshotDate)
   //     const secondProcessSnapshot = [
-  //       mockProcessFactory(1, "audacity.exe"),
-  //       mockProcessFactory(2, "explorer.exe"),
+  //       mockProcessFactory(1, 'audacity.exe'),
+  //       mockProcessFactory(2, 'explorer.exe'),
   //     ]
   //     mockPoller.snapshot.mockResolvedValue(secondProcessSnapshot)
 

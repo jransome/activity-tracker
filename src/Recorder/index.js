@@ -50,13 +50,14 @@ export default class Recorder extends EventEmitter {
   // 'private'
 
   _enqueueTraceUpdate(processEvent) {
-    console.log('enqueuing TRACE_UPDATE for', processEvent.processName, processEvent.type)
-    const updateTask = async () => await this._traceHandler(processEvent)
-    this.jobQueue.push(updateTask, () => console.log('processed trace event:', processEvent.type, processEvent.processName))
+    return new Promise (resolve => { // <= used only for testing :/
+      console.log('enqueuing TRACE_UPDATE for', processEvent.processName, processEvent.type)
+      const updateTask = async () => await this._traceHandler(processEvent)
+      this.jobQueue.push(updateTask, () => console.log('processed trace event:', processEvent.type, processEvent.processName) || resolve())
+    })
   }
 
-  async _traceHandler({ type, pid, processName, timeCreated }) {
-    const now = new Date()
+  async _traceHandler({ type, pid, processName, timeStamp }) {
     const { Program, ProgramSession, ProcessSession } = this.dbConnection
 
     if (type === "startTrace") {
@@ -69,7 +70,7 @@ export default class Recorder extends EventEmitter {
           isActive: true,
           ProgramId: program.id,
         },
-        defaults: { startTime: now }
+        defaults: { startTime: timeStamp }
       })
 
       await ProcessSession.create({
@@ -78,14 +79,14 @@ export default class Recorder extends EventEmitter {
         isActive: true,
         ProgramId: program.id,
         ProgramSessionId: programSession.id,
-        startTime: now,
+        startTime: timeStamp,
       })
     }
     else if (type === "stopTrace") {
       console.log('stop trace detected for:', processName)
       try {
         const rowsUpdated = await ProcessSession.update(
-          { isActive: false, endTime: now },
+          { isActive: false, endTime: timeStamp },
           { where: { pid, name: processName, isActive: true } }
         )
         if (rowsUpdated === 0) throw new Error('Stop trace received for unrecorded process session: ' + processName)
@@ -99,8 +100,8 @@ export default class Recorder extends EventEmitter {
         if (remainingSessions.length > 0) return
 
         const [programSession] = await program.getProgramSessions({ where: { isActive: true } })
-        const duration = now - programSession.startTime
-        await programSession.update({ isActive: false, endTime: now, duration })
+        const duration = timeStamp - programSession.startTime
+        await programSession.update({ isActive: false, endTime: timeStamp, duration })
         await program.update({ upTime: program.upTime += duration })
         console.log('Last process session for '+ processName + ' finished')
       } catch (error) {

@@ -30,6 +30,7 @@ export default class ProcessListener extends EventEmitter {
     this._psProc.stdout.on('data', (data) => {
       try {
         const event = JSON.parse(data)
+        event.timeStamp = new Date()
         this.emit('process-event', event)
       } catch (error) {
         // console.log('Non JSON PS output handled')
