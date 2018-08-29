@@ -241,9 +241,13 @@ describe('Recorder', () => {
     })
   })
 
-  xdescribe('smoke tests', () => {
+  describe('smoke tests', () => {
     it('test 1', async () => {
       const snapshotTimestamp = new Date('1990')
+      const traceTimestamp1 = new Date('1991')
+      const traceTimestamp2 = new Date('1992')
+      const traceTimestamp3 = new Date('1993')
+      const traceTimestamp4 = new Date('1994')
       const snapshot = [
         mockProcessFactory(1, 'a.exe'),
         mockProcessFactory(2, 'b.exe'),
@@ -252,16 +256,15 @@ describe('Recorder', () => {
         timestamp: snapshotTimestamp,
         snapshot
       })
-      
       const traces = [
-        { type: 'startTrace', pid: 3, processName: 'c.exe', timeStamp: new Date('1991') },
-        { type: 'stopTrace', pid: 1, processName: 'a.exe', timeStamp: new Date('1991') },
-        { type: 'startTrace', pid: 1, processName: 'd.exe', timeStamp: new Date('1991') },
-        { type: 'stopTrace', pid: 2, processName: 'b.exe', timeStamp: new Date('1992') },
-        { type: 'stopTrace', pid: 3, processName: 'c.exe', timeStamp: new Date('1993') },
-        { type: 'startTrace', pid: 3, processName: 'b.exe', timeStamp: new Date('1993') },
-        { type: 'stopTrace', pid: 1, processName: 'd.exe', timeStamp: new Date('1993') },
-        { type: 'stopTrace', pid: 3, processName: 'b.exe', timeStamp: new Date('1994') },
+        { type: 'startTrace', pid: 3, processName: 'c.exe', timeStamp: traceTimestamp1 },
+        { type: 'stopTrace', pid: 1, processName: 'a.exe', timeStamp: traceTimestamp1 },
+        { type: 'startTrace', pid: 1, processName: 'd.exe', timeStamp: traceTimestamp1 },
+        { type: 'stopTrace', pid: 2, processName: 'b.exe', timeStamp: traceTimestamp2 },
+        { type: 'stopTrace', pid: 3, processName: 'c.exe', timeStamp: traceTimestamp3 },
+        { type: 'startTrace', pid: 3, processName: 'b.exe', timeStamp: traceTimestamp3 },
+        { type: 'stopTrace', pid: 1, processName: 'd.exe', timeStamp: traceTimestamp3 },
+        { type: 'stopTrace', pid: 3, processName: 'b.exe', timeStamp: traceTimestamp4 },
       ]
       mockListener.setMockTraces(traces)
       
@@ -270,12 +273,11 @@ describe('Recorder', () => {
       await delayStopRecording()
 
       const { processSessions, programSessions, programs } = await getAllfromDb()
-      const year = 31536000000
       expect(programs).toHaveLength(4)
-      expect(programs[0].upTime).toEqual(year)
-      expect(programs[1].upTime).toEqual(year * 3)
-      expect(programs[2].upTime).toEqual(year * 2)
-      expect(programs[3].upTime).toEqual(year * 2)
+      expect(programs[0].upTime).toEqual(traceTimestamp1 - snapshotTimestamp)
+      expect(programs[1].upTime).toEqual((traceTimestamp2 - snapshotTimestamp) + (traceTimestamp4 - traceTimestamp3))
+      expect(programs[2].upTime).toEqual(traceTimestamp3 - traceTimestamp1)
+      expect(programs[3].upTime).toEqual(traceTimestamp3 - traceTimestamp1)
       expect(programSessions).toHaveLength(5)
       expect(processSessions).toHaveLength(5)
     })
