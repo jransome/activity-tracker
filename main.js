@@ -1,18 +1,18 @@
 import { app, BrowserWindow } from 'electron'
 import dbConnection from './src/models'
 import ProcessListener from './src/ProcessListener'
+import pollProcesses from './src/pollProcesses'
 import Recorder from './src/Recorder'
 
 // listen for processes
 
-import processPoller from 'process-list' // this package does not install correctly on mac, commented out when developing on mac
-// const processPoller = { snapshot: () => Promise.resolve(fakeSnapshot) } // stub for developing on mac
 
 const processListener = new ProcessListener()
-const recorder = new Recorder(processPoller, processListener, dbConnection)
-init()
-function init() {
+const recorder = new Recorder(pollProcesses, processListener, dbConnection)
 
+init()
+
+function init() {
   recorder.on('stopped recording', () => console.log('stopped event fired'))
 
   recorder.startRecording()

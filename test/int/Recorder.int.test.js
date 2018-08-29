@@ -3,10 +3,9 @@ import db from '../../src/models'
 import purgeDb from '../helpers/purgeDb'
 import mockProcessFactory from '../helpers/mockProcess'
 import MockListener from '../helpers/mockListener'
-import dateHelper from '../helpers/mockDate'
 
 describe('Recorder', () => {
-  const mockPoller = { snapshot: jest.fn() }
+  const mockPoller = jest.fn()
   const mockListener = new MockListener()
   const recorder = new Recorder(mockPoller, mockListener, db)
 
@@ -29,25 +28,23 @@ describe('Recorder', () => {
     await purgeDb(db)
   })
 
-  afterAll(() => {
-    dateHelper.restoreDate()
-  })
-
   describe('saving initial snapshot', () => {
-    const date = new Date('1990')
+    const timestamp = new Date('1990')
+    const snapshot = [
+      mockProcessFactory(1, 'chrome.exe'),
+      mockProcessFactory(2, 'chrome.exe'),
+      mockProcessFactory(3, 'audacity.exe'),
+      mockProcessFactory(4, 'vscode.exe'),
+      mockProcessFactory(5, 'vscode.exe'),
+      mockProcessFactory(6, 'chrome.exe'),
+      mockProcessFactory(7, 'vscode.exe'),
+    ]
 
     beforeAll(() => {
-      dateHelper.stubDate(date)
-      const processSnapshot = [
-        mockProcessFactory(1, 'chrome.exe'),
-        mockProcessFactory(2, 'chrome.exe'),
-        mockProcessFactory(3, 'audacity.exe'),
-        mockProcessFactory(4, 'vscode.exe'),
-        mockProcessFactory(5, 'vscode.exe'),
-        mockProcessFactory(6, 'chrome.exe'),
-        mockProcessFactory(7, 'vscode.exe'),
-      ]
-      mockPoller.snapshot.mockResolvedValue(processSnapshot)
+      mockPoller.mockResolvedValue({
+        timestamp,
+        snapshot
+      })
     })
 
     it('should save programs to the db', async () => {
@@ -70,7 +67,7 @@ describe('Recorder', () => {
       expect((await savedSessions[2].getProgram()).name).toEqual('vscode.exe')
       savedSessions.forEach((session) => {
         expect(session.isActive).toBeTruthy()
-        expect(session.startTime).toEqual(date)
+        expect(session.startTime).toEqual(timestamp)
       })
     })
 
@@ -96,7 +93,7 @@ describe('Recorder', () => {
       savedSessions.forEach((session, index) => {
         expect(session.pid).toEqual(index + 1)
         expect(session.isActive).toBeTruthy()
-        expect(session.startTime).toEqual(date)
+        expect(session.startTime).toEqual(timestamp)
       })
     })
   })
@@ -107,23 +104,23 @@ describe('Recorder', () => {
       const processName = 'abc.exe'
       const timeStamp = new Date('1990')
       const startTrace = { type: 'startTrace', pid, processName, timeStamp }
+
       await recorder._enqueueTraceUpdate(startTrace)
 
       const { processSessions, programSessions, programs } = await getAllfromDb()
       expect(processSessions).toHaveLength(1)
-      expect(programSessions).toHaveLength(1)
-      expect(programs).toHaveLength(1)
-
       expect((await processSessions[0].getProgram()).name).toEqual(processName)
       expect(processSessions[0].isActive).toBeTruthy()
       expect(processSessions[0].startTime).toEqual(timeStamp)
       expect(processSessions[0].ProgramSessionId).toEqual(1)
       expect(processSessions[0].pid).toEqual(pid)
 
+      expect(programSessions).toHaveLength(1)
       expect((await programSessions[0].getProgram()).name).toEqual(processName)
       expect(programSessions[0].isActive).toBeTruthy()
       expect(programSessions[0].startTime).toEqual(timeStamp)
-
+      
+      expect(programs).toHaveLength(1)
       expect(programs[0].name).toEqual(processName)
     })
 
@@ -197,7 +194,7 @@ describe('Recorder', () => {
       const secondProcessStart = { type: 'startTrace', pid: 2, processName, timeStamp: new Date('1991') }
       await recorder._enqueueTraceUpdate(firstProcessStart)
       await recorder._enqueueTraceUpdate(secondProcessStart)
-      
+
       const firstProcessStop = { type: 'stopTrace', pid: 1, processName, timeStamp: new Date('1992') }
       await recorder._enqueueTraceUpdate(firstProcessStop)
 
@@ -226,41 +223,84 @@ describe('Recorder', () => {
 
   describe('shutting down', () => {
     it('closes all open sessions when recording stops', async () => {
-      const processSnapshot = [
+      const snapshot = [
         mockProcessFactory(1, 'chrome.exe'),
         mockProcessFactory(2, 'vscode.exe'),
       ]
-      mockPoller.snapshot.mockResolvedValue(processSnapshot)
+      mockPoller.mockResolvedValue({
+        timeStamp: new Date(),
+        snapshot
+      })
 
       recorder.startRecording()
       await delayStopRecording()
 
-      const processSessions = await db.ProcessSession.findAll()
-      const programSessions = await db.ProgramSession.findAll()
+      const { processSessions, programSessions } = await getAllfromDb()
       expect(processSessions.filter(session => session.isActive)).toHaveLength(0)
       expect(programSessions.filter(session => session.isActive)).toHaveLength(0)
     })
   })
 
+  xdescribe('smoke tests', () => {
+    it('test 1', async () => {
+      const snapshotTimestamp = new Date('1990')
+      const snapshot = [
+        mockProcessFactory(1, 'a.exe'),
+        mockProcessFactory(2, 'b.exe'),
+      ]
+      mockPoller.mockResolvedValue({
+        timestamp: snapshotTimestamp,
+        snapshot
+      })
+      
+      const traces = [
+        { type: 'startTrace', pid: 3, processName: 'c.exe', timeStamp: new Date('1991') },
+        { type: 'stopTrace', pid: 1, processName: 'a.exe', timeStamp: new Date('1991') },
+        { type: 'startTrace', pid: 1, processName: 'd.exe', timeStamp: new Date('1991') },
+        { type: 'stopTrace', pid: 2, processName: 'b.exe', timeStamp: new Date('1992') },
+        { type: 'stopTrace', pid: 3, processName: 'c.exe', timeStamp: new Date('1993') },
+        { type: 'startTrace', pid: 3, processName: 'b.exe', timeStamp: new Date('1993') },
+        { type: 'stopTrace', pid: 1, processName: 'd.exe', timeStamp: new Date('1993') },
+        { type: 'stopTrace', pid: 3, processName: 'b.exe', timeStamp: new Date('1994') },
+      ]
+      mockListener.setMockTraces(traces)
+      
+      recorder.startRecording()
+      mockListener.emitTraces()
+      await delayStopRecording()
+
+      const { processSessions, programSessions, programs } = await getAllfromDb()
+      const year = 31536000000
+      expect(programs).toHaveLength(4)
+      expect(programs[0].upTime).toEqual(year)
+      expect(programs[1].upTime).toEqual(year * 3)
+      expect(programs[2].upTime).toEqual(year * 2)
+      expect(programs[3].upTime).toEqual(year * 2)
+      expect(programSessions).toHaveLength(5)
+      expect(processSessions).toHaveLength(5)
+    })
+  })
+
+
   // describe('handling PIDs', () => {
   //   beforeEach(async () => {
   //     dateHelper.stubDate(new Date('1990'))
-  //     const firstProcessSnapshot = [
+  //     const firstinitialSnapshot = [
   //       mockProcessFactory(1, 'chrome.exe'),
   //       mockProcessFactory(2, 'vscode.exe'),
   //     ]
-  //     mockPoller.snapshot.mockResolvedValue(firstProcessSnapshot)
+  //     mockPoller.snapshot.mockResolvedValue(firstinitialSnapshot)
   //     await recorder.manualUpdateActivity()
   //   })
 
   //   it('should handle the OS recycling PIDs', async () => {
   //     const secondSnapshotDate = new Date('1991')
   //     dateHelper.stubDate(secondSnapshotDate)
-  //     const secondProcessSnapshot = [
+  //     const secondinitialSnapshot = [
   //       mockProcessFactory(1, 'audacity.exe'),
   //       mockProcessFactory(2, 'explorer.exe'),
   //     ]
-  //     mockPoller.snapshot.mockResolvedValue(secondProcessSnapshot)
+  //     mockPoller.snapshot.mockResolvedValue(secondinitialSnapshot)
 
   //     await recorder.manualUpdateActivity()
 

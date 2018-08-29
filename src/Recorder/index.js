@@ -2,9 +2,9 @@ import queue from 'async/queue'
 import { EventEmitter } from 'events'
 
 export default class Recorder extends EventEmitter {
-  constructor(pollingClient, processListener, dbConnection) {
+  constructor(processPoller, processListener, dbConnection) {
     super()
-    this.pollingClient = pollingClient
+    this.pollProcesses = processPoller
     this.dbConnection = dbConnection
     this.isRecording = false
     this.shuttingDown = false
@@ -50,7 +50,7 @@ export default class Recorder extends EventEmitter {
   // 'private'
 
   _enqueueTraceUpdate(processEvent) {
-    return new Promise (resolve => { // <= used only for testing :/
+    return new Promise(resolve => { // <= used only for testing :/
       console.log('enqueuing TRACE_UPDATE for', processEvent.processName, processEvent.type)
       const updateTask = async () => await this._traceHandler(processEvent)
       this.jobQueue.push(updateTask, () => console.log('processed trace event:', processEvent.type, processEvent.processName) || resolve())
@@ -103,7 +103,7 @@ export default class Recorder extends EventEmitter {
         const duration = timeStamp - programSession.startTime
         await programSession.update({ isActive: false, endTime: timeStamp, duration })
         await program.update({ upTime: program.upTime += duration })
-        console.log('Last process session for '+ processName + ' finished')
+        console.log('Last process session for ' + processName + ' finished')
       } catch (error) {
         console.log('='.repeat(50))
         console.error('ERROR:', error)
@@ -114,21 +114,22 @@ export default class Recorder extends EventEmitter {
 
   _enqueueSnapshot() { //TODO pull out enqueuing logic
     console.log('enqueuing SNAPSHOT')
-    return new Promise (resolve => { // <= used only for testing :/
+    return new Promise(resolve => { // <= used only for testing :/
       const snapshotTask = async () => {
-        const fields = ['pid', 'name', 'path'] // TODO: use path?
-        const timeStamp = new Date()
-  
-        const snapshot = await this.pollingClient.snapshot(fields)
-        await this._recordSnapshot(snapshot, timeStamp)
+        const snapshot = await this.pollProcesses()
+        try {
+          await this._recordSnapshot(snapshot)
+        } catch (error) {
+          console.log(error)
+        }
       }
       this.jobQueue.push(snapshotTask, () => console.log('processed initial snapshot') || resolve())
     })
   }
 
-  async _recordSnapshot(batch, now) {
+  async _recordSnapshot({snapshot, timestamp}) {
     const { Program, ProgramSession, ProcessSession } = this.dbConnection
-    for (const snapshottedProcess of batch) {
+    for (const snapshottedProcess of snapshot) {
       const [program] = await Program.findCreateFind({
         where: { name: snapshottedProcess.name }
       })
@@ -139,7 +140,7 @@ export default class Recorder extends EventEmitter {
           isActive: true,
           ProgramId: program.id,
         },
-        defaults: { startTime: now }
+        defaults: { startTime: timestamp }
       })
 
       await ProcessSession.create({
@@ -148,7 +149,7 @@ export default class Recorder extends EventEmitter {
         isActive: true,
         ProgramId: program.id,
         ProgramSessionId: programSession.id,
-        startTime: now,
+        startTime: timestamp,
       })
     }
   }
@@ -176,7 +177,7 @@ export default class Recorder extends EventEmitter {
     console.log('enqueuing SHUTDOWN')
     const stopRecordingTask = async () => await this._closeAllSessions()
     return new Promise((resolve) => {
-      this.jobQueue.unshift(stopRecordingTask, () => {
+      this.jobQueue.push(stopRecordingTask, () => {
         this.jobQueue.kill()
         resolve()
       })
