@@ -119,7 +119,7 @@ describe('Recorder', () => {
       expect((await programSessions[0].getProgram()).name).toEqual(processName)
       expect(programSessions[0].isActive).toBeTruthy()
       expect(programSessions[0].startTime).toEqual(timeStamp)
-      
+
       expect(programs).toHaveLength(1)
       expect(programs[0].name).toEqual(processName)
     })
@@ -267,7 +267,7 @@ describe('Recorder', () => {
         { type: 'stopTrace', pid: 3, processName: 'b.exe', timeStamp: traceTimestamp4 },
       ]
       mockListener.setMockTraces(traces)
-      
+
       recorder.startRecording()
       mockListener.emitTraces()
       await delayStopRecording()
@@ -281,41 +281,79 @@ describe('Recorder', () => {
       expect(programSessions).toHaveLength(5)
       expect(processSessions).toHaveLength(5)
     })
+
+    it('test 2', async () => {
+      const snapshotTimestamp = new Date('1990')
+      const traceTimestamp1 = new Date('1991')
+      const traceTimestamp2 = new Date('1992')
+      const traceTimestamp3 = new Date('1993')
+      const traceTimestamp4 = new Date('1994')
+      const snapshot = [
+        mockProcessFactory(1, 'a.exe'),
+        mockProcessFactory(2, 'b.exe'),
+      ]
+      mockPoller.mockResolvedValue({
+        timestamp: snapshotTimestamp,
+        snapshot
+      })
+      const traces = [
+        { type: 'startTrace', pid: 3, processName: 'a.exe', timeStamp: traceTimestamp1 },
+        { type: 'startTrace', pid: 4, processName: 'a.exe', timeStamp: traceTimestamp2 },
+        { type: 'stopTrace', pid: 3, processName: 'a.exe', timeStamp: traceTimestamp3 },
+        { type: 'stopTrace', pid: 4, processName: 'a.exe', timeStamp: traceTimestamp3 },
+        { type: 'stopTrace', pid: 2, processName: 'b.exe', timeStamp: traceTimestamp4 },
+        { type: 'stopTrace', pid: 1, processName: 'a.exe', timeStamp: traceTimestamp4 },
+      ]
+      mockListener.setMockTraces(traces)
+
+      recorder.startRecording()
+      mockListener.emitTraces()
+      await delayStopRecording()
+
+      const { processSessions, programSessions, programs } = await getAllfromDb()
+      expect(programs).toHaveLength(2)
+      expect(programs[0].upTime).toEqual(traceTimestamp4 - snapshotTimestamp)
+      expect(programs[1].upTime).toEqual(traceTimestamp4 - snapshotTimestamp)
+      expect(programSessions).toHaveLength(2)
+      expect((await programs[0].getProgramSessions())).toHaveLength(1)
+      expect((await programs[1].getProgramSessions())).toHaveLength(1)
+      expect(processSessions).toHaveLength(4)
+    })
+
+    it('test 3', async () => {
+      const snapshotTimestamp = new Date('1990')
+      const traceTimestamp1 = new Date('1991')
+      const traceTimestamp2 = new Date('1992')
+      const traceTimestamp3 = new Date('1993')
+      const traceTimestamp4 = new Date('1994')
+      const snapshot = [
+        mockProcessFactory(1, 'a.exe'),
+      ]
+      mockPoller.mockResolvedValue({
+        timestamp: snapshotTimestamp,
+        snapshot
+      })
+      const traces = [
+        { type: 'stopTrace', pid: 3, processName: 'process_that_wasnt_in_initial_snapshot.exe', timeStamp: traceTimestamp1 },
+        { type: 'stopTrace', pid: 1, processName: 'process_that_wasnt_in_initial_snapshot.exe', timeStamp: traceTimestamp1 },
+        { type: 'startTrace', pid: 1, processName: 'process_that_wasnt_in_initial_snapshot.exe', timeStamp: traceTimestamp2 },
+        { type: 'stopTrace', pid: 1, processName: 'process_that_wasnt_in_initial_snapshot.exe', timeStamp: traceTimestamp3 },
+        { type: 'stopTrace', pid: 1, processName: 'a.exe', timeStamp: traceTimestamp4 },
+      ]
+      mockListener.setMockTraces(traces)
+
+      recorder.startRecording()
+      mockListener.emitTraces()
+      await delayStopRecording()
+
+      const { processSessions, programSessions, programs } = await getAllfromDb()
+      expect(programs).toHaveLength(2)
+      expect(programs[0].upTime).toEqual(traceTimestamp4 - snapshotTimestamp)
+      expect(programs[1].upTime).toEqual(traceTimestamp3 - traceTimestamp2)
+      expect(programSessions).toHaveLength(2)
+      expect((await programs[0].getProgramSessions())).toHaveLength(1)
+      expect((await programs[1].getProgramSessions())).toHaveLength(1)
+      expect(processSessions).toHaveLength(2)
+    })
   })
-
-
-  // describe('handling PIDs', () => {
-  //   beforeEach(async () => {
-  //     dateHelper.stubDate(new Date('1990'))
-  //     const firstinitialSnapshot = [
-  //       mockProcessFactory(1, 'chrome.exe'),
-  //       mockProcessFactory(2, 'vscode.exe'),
-  //     ]
-  //     mockPoller.snapshot.mockResolvedValue(firstinitialSnapshot)
-  //     await recorder.manualUpdateActivity()
-  //   })
-
-  //   it('should handle the OS recycling PIDs', async () => {
-  //     const secondSnapshotDate = new Date('1991')
-  //     dateHelper.stubDate(secondSnapshotDate)
-  //     const secondinitialSnapshot = [
-  //       mockProcessFactory(1, 'audacity.exe'),
-  //       mockProcessFactory(2, 'explorer.exe'),
-  //     ]
-  //     mockPoller.snapshot.mockResolvedValue(secondinitialSnapshot)
-
-  //     await recorder.manualUpdateActivity()
-
-  //     const savedSessions = await db.ProcessSession.findAll()
-  //     expect(savedSessions).toHaveLength(4)
-  //     expect(savedSessions[0].isActive).toBeFalsy()
-  //     expect(savedSessions[1].isActive).toBeFalsy()
-  //     expect(savedSessions[2].isActive).toBeTruthy()
-  //     expect(savedSessions[3].isActive).toBeTruthy()
-  //     expect(savedSessions[0].endTime).toBe(secondSnapshotDate)
-  //     expect(savedSessions[1].endTime).toBe(secondSnapshotDate)
-  //     expect(savedSessions[2].endTime).toBeNull()
-  //     expect(savedSessions[3].endTime).toBeNull()
-  //   })
-  // })
 })
