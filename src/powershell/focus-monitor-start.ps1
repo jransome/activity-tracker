@@ -25,8 +25,8 @@ namespace FocusMonitor
                 int processId = element.Current.ProcessId;
                 using (Process process = Process.GetProcessById(processId))
                 {
-                    string stringJSON = @"{ ""pid"": " + processId + @", ""path"": " + @"""" + process.MainModule.FileName + @"""" + " }";
-                    Console.WriteLine(stringJSON);
+                    string output = processId + "_FOCUS_CHANGE_" + process.MainModule.FileName;
+                    Console.WriteLine(output);
                 }
             }
         }

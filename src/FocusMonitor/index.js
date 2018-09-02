@@ -30,13 +30,18 @@ class FocusMonitor extends EventEmitter {
 
     this._psProc.stdout.on('data', (data) => {
       try {
-        const event = JSON.parse(data)
-        event.timeStamp = new Date()
-        this.emit('focus-change', event)
-        // this.emit('focus-change', data)
+        const output = data.split('_FOCUS_CHANGE_') // TODO: refactor
+        if (this._validate(output)) {
+          const event = {
+            pid: parseInt(output[0]),
+            path: output[1].trim(),
+            name: output[1].trim().split("\\").slice(-1)[0],
+            timestamp: new Date()
+          }
+          this.emit('focus-change', event)
+        } 
       } catch (error) {
-        console.log('Non JSON PS output handled')
-        // console.log(error)
+        console.log(error)
       }
     })
 
@@ -51,14 +56,18 @@ class FocusMonitor extends EventEmitter {
       console.log('Stopped listening')
     })
   }
+
+  _validate(event) {
+    return (event.length === 2)
+  }
 }
 
 const fm = new FocusMonitor()
 
 fm.on('powershell-error', (data) => {
-    console.log(data)
+  console.log('error', data)
 })
 
 fm.on('focus-change', (data) => {
-    console.log('yeah', data)
+  console.log(data)
 })
