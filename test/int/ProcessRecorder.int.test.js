@@ -272,10 +272,10 @@ describe('ProcessRecorder', () => {
         { type: 'stopTrace', pid: 1, processName: 'd.exe', timeStamp: traceTimestamp3 },
         { type: 'stopTrace', pid: 3, processName: 'b.exe', timeStamp: traceTimestamp4 },
       ]
-      mockListener.setMockTraces(traces)
+      mockListener.setMockEvents(traces)
 
       recorder.startRecording()
-      mockListener.emitTraces()
+      mockListener.emitEvents()
       await delayStopRecording()
 
       const { processSessions, programSessions, programs } = await getAllfromDb()
@@ -310,10 +310,10 @@ describe('ProcessRecorder', () => {
         { type: 'stopTrace', pid: 2, processName: 'b.exe', timeStamp: traceTimestamp4 },
         { type: 'stopTrace', pid: 1, processName: 'a.exe', timeStamp: traceTimestamp4 },
       ]
-      mockListener.setMockTraces(traces)
+      mockListener.setMockEvents(traces)
 
       recorder.startRecording()
-      mockListener.emitTraces()
+      mockListener.emitEvents()
       await delayStopRecording()
 
       const { processSessions, programSessions, programs } = await getAllfromDb()
@@ -346,10 +346,10 @@ describe('ProcessRecorder', () => {
         { type: 'stopTrace', pid: 1, processName: 'process_that_wasnt_in_initial_snapshot.exe', timeStamp: traceTimestamp3 },
         { type: 'stopTrace', pid: 1, processName: 'a.exe', timeStamp: traceTimestamp4 },
       ]
-      mockListener.setMockTraces(traces)
+      mockListener.setMockEvents(traces)
 
       recorder.startRecording()
-      mockListener.emitTraces()
+      mockListener.emitEvents()
       await delayStopRecording()
 
       const { processSessions, programSessions, programs } = await getAllfromDb()

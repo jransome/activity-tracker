@@ -1,12 +1,12 @@
 import { EventEmitter } from 'events'
 
 export default class MockListener extends EventEmitter {
-  setMockTraces(mockTraceEvents) {
-    this.mockTraceEvents = mockTraceEvents
+  setMockEvents(mockEvents) {
+    this.mockEvents = mockEvents
   }
 
-  emitTraces() {
-    this.mockTraceEvents.forEach(trace => {
+  emitEvents() {
+    this.mockEvents.forEach(trace => {
       this.emit('process-event', trace)
     })
   }
