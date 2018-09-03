@@ -1,13 +1,19 @@
-import Recorder from '../../src/Recorder'
+import ProcessRecorder from '../../src/ProcessRecorder'
 import db from '../../src/models'
 import purgeDb from '../helpers/purgeDb'
 import mockProcessFactory from '../helpers/mockProcess'
 import MockListener from '../helpers/mockListener'
+import queue from 'async/queue'
 
-describe('Recorder', () => {
+const dbJobQueue = queue(async (task, done) => {
+  await task()
+  done()
+})
+
+describe('ProcessRecorder', () => {
   const mockPoller = jest.fn()
   const mockListener = new MockListener()
-  const recorder = new Recorder(mockPoller, mockListener, db)
+  const recorder = new ProcessRecorder(mockPoller, mockListener, dbJobQueue, db)
 
   const delayStopRecording = (time) => {
     return new Promise(resolve => {

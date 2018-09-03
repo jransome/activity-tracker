@@ -2,20 +2,25 @@ import { app, BrowserWindow } from 'electron'
 import dbConnection from './src/models'
 import ProcessListener from './src/ProcessListener'
 import pollProcesses from './src/pollProcesses'
-import Recorder from './src/Recorder'
+import ProcessRecorder from './src/ProcessRecorder'
+
+import queue from 'async/queue'
+
+const dbJobQueue = queue(async (task, done) => {
+  await task()
+  done()
+})
 
 // listen for processes
-
-
 const processListener = new ProcessListener()
-const recorder = new Recorder(pollProcesses, processListener, dbConnection)
+const processRecorder = new ProcessRecorder(pollProcesses, processListener, dbJobQueue, dbConnection)
 
 init()
 
 function init() {
-  recorder.on('stopped recording', () => console.log('stopped event fired'))
+  processRecorder.on('stopped recording', () => console.log('stopped event fired'))
 
-  recorder.startRecording()
+  processRecorder.startRecording()
 
   // setTimeout(() => {
   //   console.log('STOP')
@@ -24,7 +29,7 @@ function init() {
 
   // setTimeout(() => {
   //   console.log('start againg')
-  //   recorder.startRecording()
+  //   processRecorder.startRecording()
   // }, 45000)
 
   // setTimeout(() => {
@@ -34,7 +39,7 @@ function init() {
 }
 
 async function stopRecording() {
-  await recorder.stopRecording()
+  await processRecorder.stopRecording()
 }
 
 // app

@@ -1,18 +1,14 @@
-import queue from 'async/queue'
 import { EventEmitter } from 'events'
 
-export default class Recorder extends EventEmitter {
-  constructor(processPoller, processListener, dbConnection) {
+export default class ProcessRecorder extends EventEmitter {
+  constructor(processPoller, processListener, dbJobQueue, dbConnection) {
     super()
     this.pollProcesses = processPoller
     this.dbConnection = dbConnection
     this.isRecording = false
     this.shuttingDown = false
     this.shutdownPromise = null
-    this.jobQueue = queue(async (task, done) => {
-      await task()
-      done()
-    })
+    this.jobQueue = dbJobQueue
 
     processListener.on('process-event', (processEvent) => {
       if (processEvent.processName === 'git.exe' || processEvent.processName === 'conhost.exe') return// TO DELETE
@@ -52,12 +48,12 @@ export default class Recorder extends EventEmitter {
   _enqueueTraceUpdate(processEvent) {
     return new Promise(resolve => { // <= used only for testing :/
       console.log('enqueuing TRACE_UPDATE for', processEvent.processName, processEvent.type)
-      const updateTask = async () => await this._traceHandler(processEvent)
+      const updateTask = async () => await this._traceRecorder(processEvent)
       this.jobQueue.push(updateTask, () => console.log('processed trace event:', processEvent.type, processEvent.processName) || resolve())
     })
   }
 
-  async _traceHandler({ type, pid, processName, timeStamp }) {
+  async _traceRecorder({ type, pid, processName, timeStamp }) {
     const { Program, ProgramSession, ProcessSession } = this.dbConnection
 
     if (type === "startTrace") {
