@@ -129,7 +129,7 @@ export default class ProcessRecorder extends EventEmitter {
       const [program] = await Program.findCreateFind({
         where: { name: snapshottedProcess.name }
       })
-      program.update({ isActive: true })
+     await program.update({ isActive: true })
 
       const [programSession] = await ProgramSession.findCreateFind({
         where: {

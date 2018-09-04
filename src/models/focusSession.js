@@ -4,7 +4,8 @@ export default (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     isActive: DataTypes.BOOLEAN,
     startTime: DataTypes.DATE,
-    endTime: DataTypes.DATE
+    endTime: DataTypes.DATE,
+    duration: DataTypes.INTEGER
   }, {})
 
   FocusSession.associate = (models) => {

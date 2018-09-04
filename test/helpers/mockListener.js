@@ -7,7 +7,7 @@ export default class MockListener extends EventEmitter {
 
   emitEvents() {
     this.mockEvents.forEach(trace => {
-      this.emit('process-event', trace)
+      this.emit('listener-event', trace)
     })
   }
 }

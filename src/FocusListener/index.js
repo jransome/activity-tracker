@@ -1,11 +1,10 @@
-// import { spawn } from 'child_process'
-// import { EventEmitter } from 'events'
+import { spawn } from 'child_process'
+import { EventEmitter } from 'events'
 
-const spawn = require('child_process').spawn
-const EventEmitter = require('events').EventEmitter
+// const spawn = require('child_process').spawn
+// const EventEmitter = require('events').EventEmitter
 
-// export default 
-class FocusMonitor extends EventEmitter {
+export default class FocusListener extends EventEmitter {
   constructor() {
     super()
     const encoding = 'utf8' // encoding for strings not buffers (as is default)
@@ -35,10 +34,10 @@ class FocusMonitor extends EventEmitter {
           const event = {
             pid: parseInt(output[0]),
             path: output[1].trim(),
-            name: output[1].trim().split("\\").slice(-1)[0],
+            processName: output[1].trim().split("\\").slice(-1)[0],
             timestamp: new Date()
           }
-          this.emit('focus-change', event)
+          this.emit('listener-event', event)
         } 
       } catch (error) {
         console.log(error)
@@ -62,12 +61,12 @@ class FocusMonitor extends EventEmitter {
   }
 }
 
-const fm = new FocusMonitor()
+// const fm = new FocusMonitor()
 
-fm.on('powershell-error', (data) => {
-  console.log('error', data)
-})
+// fm.on('powershell-error', (data) => {
+//   console.log('error', data)
+// })
 
-fm.on('focus-change', (data) => {
-  console.log(data)
-})
+// fm.on('event', (data) => {
+//   console.log(data)
+// })
