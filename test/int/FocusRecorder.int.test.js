@@ -109,7 +109,7 @@ describe('FocusRecorder', () => {
 
       await recorder._enqueueFocusUpdate(focusEvent1)
 
-      const { programs, focusSessions } = await getAllfromDb()
+      const { focusSessions } = await getAllfromDb()
       expect(focusSessions).toHaveLength(1)
       expect(focusSessions[0].isActive).toBeTruthy()
       expect(focusSessions[0].startTime).toEqual(timestamp1)
@@ -126,7 +126,7 @@ describe('FocusRecorder', () => {
       await recorder._enqueueFocusUpdate(focusEvent1)
       await recorder._enqueueFocusUpdate(focusEvent2)
 
-      const { programs, focusSessions } = await getAllfromDb()
+      const { focusSessions } = await getAllfromDb()
       expect(focusSessions).toHaveLength(2)
       expect(focusSessions[0].isActive).toBeFalsy()
       expect(focusSessions[0].startTime).toEqual(timestamp1)
@@ -135,23 +135,24 @@ describe('FocusRecorder', () => {
     })
   })
 
-  xdescribe('shutting down', () => {
+  describe('shutting down', () => {
     it('closes all open sessions when recording stops', async () => {
-      const snapshot = [
-        mockProcessFactory(1, 'chrome.exe'),
-        mockProcessFactory(2, 'vscode.exe'),
+      const timestamp1 = new Date('1990')
+      const focusEvents = [
+        { pid: 1, processName: 'a.exe', timestamp: timestamp1 },
       ]
-      mockPoller.mockResolvedValue({
-        timestamp: new Date(),
-        snapshot
-      })
+      mockListener.setMockEvents(focusEvents)
 
       recorder.startRecording()
+      mockListener.emitEvents()
       await delayStopRecording()
 
-      const { processSessions, programSessions } = await getAllfromDb()
-      expect(processSessions.filter(session => session.isActive)).toHaveLength(0)
-      expect(programSessions.filter(session => session.isActive)).toHaveLength(0)
+      const { focusSessions } = await getAllfromDb()
+      expect(focusSessions).toHaveLength(1)
+      expect(focusSessions[0].isActive).toBeFalsy()
+      expect(focusSessions[0].startTime).toEqual(timestamp1)
+      expect(focusSessions[0].endTime).toBeTruthy()
+      expect(focusSessions[0].duration).toBeTruthy()
     })
   })
 
@@ -171,7 +172,7 @@ describe('FocusRecorder', () => {
       mockListener.emitEvents()
       await delayStopRecording()
 
-      const { programs, focusSessions } = await getAllfromDb()
+      const { focusSessions } = await getAllfromDb()
 
       expect(focusSessions).toHaveLength(3)
       expect(focusSessions[0].isActive).toBeFalsy()
