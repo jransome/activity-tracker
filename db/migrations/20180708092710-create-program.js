@@ -16,6 +16,9 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       },
+      focusTime: {
+        type: Sequelize.INTEGER
+      },
       upTime: {
         type: Sequelize.INTEGER
       },
