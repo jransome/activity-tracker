@@ -4,9 +4,8 @@ import purgeDb from '../helpers/purgeDb'
 import MockListener from '../helpers/mockListener'
 import queue from 'async/queue'
 
-const dbJobQueue = queue(async (task, done) => {
+const dbJobQueue = queue(async (task) => {
   await task()
-  // done()
 })
 
 describe('FocusRecorder', () => {

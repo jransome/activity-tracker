@@ -45,12 +45,21 @@ export default class FocusRecorder extends EventEmitter {
 
   // 'private'
 
-  _enqueueFocusUpdate(focusEvent) { // TODO: error handling on push
-    return new Promise(resolve => { // <= used only for testing :/
-      console.log('enqueuing FOCUS_UPDATE for', focusEvent.processName)
-      const updateTask = async () => await this._recordFocusChange(focusEvent)
-      this.jobQueue.push(updateTask, (err) => console.log('processed focus change event:', err, focusEvent.processName) || resolve())
+  _enqueue(job, log, cb) {
+    return new Promise(resolve => {
+      console.log('enqueuing...', log)
+      this.jobQueue.push(job, err => {
+        if (err) console.error(err)
+        console.log('processed...', log)
+        if (cb) cb()
+        resolve()
+      })
     })
+  }
+
+  async _enqueueFocusUpdate(focusEvent) {
+    const updateTask = async () => await this._recordFocusChange(focusEvent)
+    await this._enqueue(updateTask, 'FOCUS_UPDATE for ' + focusEvent.processName)
   }
 
   async _recordFocusChange(focusChangeEvent) {
@@ -120,10 +129,9 @@ export default class FocusRecorder extends EventEmitter {
     // }
   }
 
-  _enqueueCheckDbClosedGracefully() {
-    console.log('enqueuing DB_CHECK')
+  async _enqueueCheckDbClosedGracefully() {
     const dbCheckTask = async () => await this._checkDbClosedGracefully()
-    this.jobQueue.push(dbCheckTask, () => console.log('checked db closed gracefully'))
+    await this._enqueue(dbCheckTask, 'DB_CHECK')
   }
 
   async _checkDbClosedGracefully() {
@@ -139,15 +147,16 @@ export default class FocusRecorder extends EventEmitter {
     // }
   }
 
-  _triggerShutdown() {
-    console.log('enqueuing SHUTDOWN')
+  async _triggerShutdown() {
+    // console.log('enqueuing SHUTDOWN')
     const stopRecordingTask = async () => await this._closeActiveSession()
-    return new Promise((resolve) => {
-      this.jobQueue.push(stopRecordingTask, () => {
-        this.jobQueue.kill()
-        resolve()
-      })
-    })
+    await this._enqueue(stopRecordingTask, 'SHUTDOWN', this.jobQueue.kill)
+    // return new Promise((resolve) => {
+    //   this.jobQueue.push(stopRecordingTask, () => {
+    //     this.jobQueue.kill()
+    //     resolve()
+    //   })
+    // })
   }
 
   async _closeActiveSession(timestamp = new Date()) {

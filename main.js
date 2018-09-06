@@ -8,9 +8,8 @@ import FocusRecorder from './src/FocusRecorder'
 
 import queue from 'async/queue'
 
-const dbJobQueue = queue(async (task, done) => {
+const dbJobQueue = queue(async (task) => {
   await task()
-  done()
 })
 
 // listen for focus changes
