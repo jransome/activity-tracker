@@ -1,7 +1,7 @@
 export default (sequelize, DataTypes) => {
   const FocusSession = sequelize.define('FocusSession', {
     pid: DataTypes.INTEGER,
-    name: DataTypes.STRING,
+    processName: DataTypes.STRING,
     isActive: DataTypes.BOOLEAN,
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,

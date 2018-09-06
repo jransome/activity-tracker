@@ -1,8 +1,10 @@
 import { app, BrowserWindow } from 'electron'
 import dbConnection from './src/models'
-import ProcessListener from './src/ProcessListener'
 import pollProcesses from './src/pollProcesses'
+import ProcessListener from './src/ProcessListener'
 import ProcessRecorder from './src/ProcessRecorder'
+import FocusListener from './src/FocusListener'
+import FocusRecorder from './src/FocusRecorder'
 
 import queue from 'async/queue'
 
@@ -11,35 +13,25 @@ const dbJobQueue = queue(async (task, done) => {
   done()
 })
 
+// listen for focus changes
+const pollFocus = 'TODO' // placeholder
+const focusListener = new FocusListener()
+const focusRecorder = new FocusRecorder(pollFocus, focusListener, dbJobQueue, dbConnection)
+
 // listen for processes
-const processListener = new ProcessListener()
-const processRecorder = new ProcessRecorder(pollProcesses, processListener, dbJobQueue, dbConnection)
+// const processListener = new ProcessListener()
+// const processRecorder = new ProcessRecorder(pollProcesses, processListener, dbJobQueue, dbConnection)
 
 init()
 
 function init() {
-  processRecorder.on('stopped recording', () => console.log('stopped event fired'))
-
-  processRecorder.startRecording()
-
-  // setTimeout(() => {
-  //   console.log('STOP')
-  //   stopRecording()
-  // }, 5000)
-
-  // setTimeout(() => {
-  //   console.log('start againg')
-  //   processRecorder.startRecording()
-  // }, 45000)
-
-  // setTimeout(() => {
-  //   console.log('STOP again')
-  //   stopRecording()
-  // }, 60000)
+  focusRecorder.startRecording()
+  // processRecorder.startRecording()
 }
 
 async function stopRecording() {
-  await processRecorder.stopRecording()
+  await focusRecorder.stopRecording()
+  // await processRecorder.stopRecording()
 }
 
 // app

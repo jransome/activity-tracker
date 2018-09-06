@@ -6,6 +6,7 @@ export default (sequelize, DataTypes) => {
   }, {})
 
   Program.associate = (models) => {
+    Program.hasMany(models.FocusSession)
     Program.hasMany(models.ProgramSession)
     Program.hasMany(models.ProcessSession)
   }

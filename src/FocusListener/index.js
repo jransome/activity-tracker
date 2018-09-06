@@ -1,9 +1,6 @@
 import { spawn } from 'child_process'
 import { EventEmitter } from 'events'
 
-// const spawn = require('child_process').spawn
-// const EventEmitter = require('events').EventEmitter
-
 export default class FocusListener extends EventEmitter {
   constructor() {
     super()
@@ -60,13 +57,3 @@ export default class FocusListener extends EventEmitter {
     return (event.length === 2)
   }
 }
-
-// const fm = new FocusMonitor()
-
-// fm.on('powershell-error', (data) => {
-//   console.log('error', data)
-// })
-
-// fm.on('event', (data) => {
-//   console.log(data)
-// })

@@ -8,6 +8,7 @@ export default class FocusRecorder extends EventEmitter {
     this.isRecording = false
     this.shuttingDown = false
     this.shutdownPromise = null
+    this.activeSessionCache = null
     this.jobQueue = dbJobQueue
 
     focusListener.on('listener-event', (focusChangeEvent) => {
@@ -44,29 +45,37 @@ export default class FocusRecorder extends EventEmitter {
 
   // 'private'
 
-  _enqueueFocusUpdate(focusEvent) { // TODO: error handling
+  _enqueueFocusUpdate(focusEvent) { // TODO: error handling on push
     return new Promise(resolve => { // <= used only for testing :/
       console.log('enqueuing FOCUS_UPDATE for', focusEvent.processName)
       const updateTask = async () => await this._recordFocusChange(focusEvent)
-      this.jobQueue.push(updateTask, () => console.log('processed focus change event:', focusEvent.processName) || resolve())
+      this.jobQueue.push(updateTask, (err) => console.log('processed focus change event:', err, focusEvent.processName) || resolve())
     })
   }
 
-  async _recordFocusChange({ pid, path, processName, timestamp }) {
+  async _recordFocusChange(focusChangeEvent) {
+    const { pid, processName, timestamp } = focusChangeEvent
+    if (this.activeSessionCache !== null &&
+      this.activeSessionCache.pid === pid &&
+      this.activeSessionCache.processName === processName) return
+
+    await this._closeActiveSession(timestamp)
+    await this._saveNewFocus(focusChangeEvent)
+  }
+
+  async _saveNewFocus({ pid, path, processName, timestamp }) {
     const { Program, FocusSession } = this.dbConnection
-    try {
-      await this._closeActiveSession(timestamp)
-      
-    } catch (error) {
-      console.log(error)
-    }
-    await FocusSession.create({
+    const [program] = await Program.findCreateFind({ where: { name: processName } })
+    const newActiveSession = {
       pid,
       path,
+      processName,
       isActive: true,
-      name: processName,
-      startTime: timestamp
-    })
+      startTime: timestamp,
+      ProgramId: program.id
+    }
+    this.activeSessionCache = newActiveSession
+    await FocusSession.create(newActiveSession)
   }
 
   _enqueueSnapshot() { //TODO pull out enqueuing logic
@@ -143,12 +152,13 @@ export default class FocusRecorder extends EventEmitter {
 
   async _closeActiveSession(timestamp = new Date()) {
     const { FocusSession } = this.dbConnection
-
     const activeFocusSession = await FocusSession.findOne({ where: { isActive: true } })
 
     if (activeFocusSession) {
       const duration = timestamp - activeFocusSession.startTime
-      await activeFocusSession.update({ isActive: false, endTime: timestamp, duration })
+      await activeFocusSession.update({ isActive: false, endTime: timestamp, duration: duration })
+      const program = await activeFocusSession.getProgram()
+      await program.update({ focusTime: program.focusTime + duration })
     }
   }
 }
