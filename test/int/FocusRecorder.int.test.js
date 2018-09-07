@@ -11,11 +11,8 @@ const getAllfromDb = async () => ({
 
 describe('FocusRecorder', () => {
   let recorder;
-  const mockPoller = jest.fn()
-  const mockListener = new MockListener()
-  const dbJobQueue = queue(async (task) => {
-    await task()
-  })
+  let mockPoller;
+  let mockListener;
   const delayStopRecording = (time) => {
     return new Promise(resolve => {
       setTimeout(async () => {
@@ -24,15 +21,20 @@ describe('FocusRecorder', () => {
       }, time)
     })
   }
-
+  
   beforeEach(async () => {
+    mockPoller = jest.fn()
+    mockListener = new MockListener()
+    const dbJobQueue = queue(async (task) => {
+      await task()
+    })
     recorder = new FocusRecorder(mockPoller, mockListener, dbJobQueue, db)
     await purgeDb(db)
   })
 
   describe('saving initial snapshot', () => {
     it('records the program that currently has focus', async () => {
-      const activeFocus = { pid: 1, processName: 'a.exe', timestamp: new Date('1990') }
+      const activeFocus = { pid: 1, exeName: 'a.exe', timestamp: new Date('1990') }
       mockPoller.mockResolvedValue(activeFocus)
 
       await recorder._enqueueSnapshot()
@@ -41,12 +43,12 @@ describe('FocusRecorder', () => {
       expect.assertions(9)
       expect(focusSessions).toHaveLength(1)
       expect(focusSessions[0].pid).toEqual(activeFocus.pid)
-      expect(focusSessions[0].processName).toEqual(activeFocus.processName)
+      expect(focusSessions[0].exeName).toEqual(activeFocus.exeName)
       expect(focusSessions[0].startTime).toEqual(activeFocus.timestamp)
       expect(focusSessions[0].isActive).toBeTruthy()
       expect(focusSessions[0].ProgramId).toEqual(programs[0].id)
       expect(programs).toHaveLength(1)
-      expect(programs[0].name).toEqual(activeFocus.processName)
+      expect(programs[0].exeName).toEqual(activeFocus.exeName)
       expect(programs[0].focusTime).toBeNull()
     })
   })
@@ -54,8 +56,8 @@ describe('FocusRecorder', () => {
   describe('saving focus changes', () => {
     it('records a new focus session', async () => {
       const timestamp = new Date('1990')
-      const processName = 'a.exe'
-      const focusEvent1 = { pid: 1, processName, timestamp }
+      const exeName = 'a.exe'
+      const focusEvent1 = { pid: 1, exeName, timestamp }
 
       await recorder._enqueueFocusUpdate(focusEvent1)
 
@@ -67,14 +69,14 @@ describe('FocusRecorder', () => {
       expect(focusSessions[0].endTime).toBeNull()
       expect(focusSessions[0].duration).toBeNull()
       expect(programs).toHaveLength(1)
-      expect(programs[0].name).toEqual(processName)
+      expect(programs[0].exeName).toEqual(exeName)
     })
 
     it('records the end of the current focus session', async () => {
       const timestamp1 = new Date('1990')
       const timestamp2 = new Date('1991')
-      const focusEvent1 = { pid: 1, processName: 'a.exe', timestamp: timestamp1 }
-      const focusEvent2 = { pid: 2, processName: 'b.exe', timestamp: timestamp2 }
+      const focusEvent1 = { pid: 1, exeName: 'a.exe', timestamp: timestamp1 }
+      const focusEvent2 = { pid: 2, exeName: 'b.exe', timestamp: timestamp2 }
 
       await recorder._enqueueFocusUpdate(focusEvent1)
       await recorder._enqueueFocusUpdate(focusEvent2)
@@ -94,7 +96,7 @@ describe('FocusRecorder', () => {
   describe('cleaning db', () => {
     it('cleans up the db if FocusRecorder was not shutdown properly', async () => {
       // TODO: refactor setup
-      const previousActiveFocus = { pid: 1, processName: 'a.exe', timestamp: new Date('1990') }
+      const previousActiveFocus = { pid: 1, exeName: 'a.exe', timestamp: new Date('1990') }
       mockPoller.mockResolvedValue(previousActiveFocus)
       await recorder._enqueueSnapshot()
 
@@ -111,7 +113,7 @@ describe('FocusRecorder', () => {
     it('closes all open sessions when recording stops', async () => {
       const timestamp1 = new Date('1990')
       const focusEvents = [
-        { pid: 1, processName: 'a.exe', timestamp: timestamp1 },
+        { pid: 1, exeName: 'a.exe', timestamp: timestamp1 },
       ]
       mockListener.setMockEvents(focusEvents)
 
@@ -138,12 +140,12 @@ describe('FocusRecorder', () => {
         new Date('1993'),
         new Date('1994'),
       ]
-      const activeFocus = { pid: 1, processName: 'a.exe', timestamp: timestamps[0] }
+      const activeFocus = { pid: 1, exeName: 'a.exe', timestamp: timestamps[0] }
       const focusEvents = [
-        { pid: 2, processName: 'b.exe', timestamp: timestamps[1] },
-        { pid: 3, processName: 'c.exe', timestamp: timestamps[2] },
-        { pid: 2, processName: 'b.exe', timestamp: timestamps[3] },
-        { pid: 3, processName: 'c.exe', timestamp: timestamps[4] },
+        { pid: 2, exeName: 'b.exe', timestamp: timestamps[1] },
+        { pid: 3, exeName: 'c.exe', timestamp: timestamps[2] },
+        { pid: 2, exeName: 'b.exe', timestamp: timestamps[3] },
+        { pid: 3, exeName: 'c.exe', timestamp: timestamps[4] },
       ]
       mockPoller.mockResolvedValue(activeFocus)
       mockListener.setMockEvents(focusEvents)

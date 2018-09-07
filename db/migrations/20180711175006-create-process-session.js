@@ -32,7 +32,7 @@ module.exports = {
       pid: {
         type: Sequelize.INTEGER
       },
-      name: {
+      exeName: {
         type: Sequelize.STRING
       },
       pidName: {

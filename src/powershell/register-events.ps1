@@ -7,7 +7,7 @@ function global:Convert-EventToJson {
     [hashtable]$eventObj = @{}
     $eventObj.type = $Type
     $eventObj.pid = $TraceEvent.ProcessID
-    $eventObj.processName = $TraceEvent.ProcessName
+    $eventObj.exeName = $TraceEvent.ProcessName
     $eventObj.timeCreated = $TraceEvent.TIME_CREATED # unused
 
     $json = $eventObj | ConvertTo-Json -Compress

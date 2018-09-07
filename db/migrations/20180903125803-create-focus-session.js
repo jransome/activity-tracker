@@ -22,7 +22,7 @@ module.exports = {
       pid: {
         type: Sequelize.INTEGER
       },
-      processName: {
+      exeName: {
         type: Sequelize.STRING
       },
       isActive: {

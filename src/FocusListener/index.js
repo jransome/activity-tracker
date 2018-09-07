@@ -31,7 +31,7 @@ export default class FocusListener extends EventEmitter {
           const event = {
             pid: parseInt(output[0]),
             path: output[1].trim(),
-            processName: output[1].trim().split("\\").slice(-1)[0],
+            exeName: output[1].trim().split("\\").slice(-1)[0],
             timestamp: new Date()
           }
           this.emit('listener-event', event)

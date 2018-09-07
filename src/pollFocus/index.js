@@ -29,7 +29,7 @@ export default () => new Promise((resolve, reject) => {
   psProc.stdout.on('data', (data) => {
     try {
       const event = JSON.parse(data)
-      event.processName = event.path.trim().split("/").slice(-1)[0]
+      event.exeName = event.path.trim().split("/").slice(-1)[0]
       event.timestamp = new Date()
       resolve(event)
       psProc.stdin.end()

@@ -69,26 +69,26 @@ export default class FocusRecorder extends EventEmitter {
 
   async _enqueueFocusUpdate(focusEvent) {
     const updateTask = async () => await this._recordFocusChange(focusEvent)
-    await this._enqueue(updateTask, 'FOCUS_UPDATE for ' + focusEvent.processName)
+    await this._enqueue(updateTask, 'FOCUS_UPDATE for ' + focusEvent.exeName)
   }
 
   async _recordFocusChange(focusChangeEvent) {
-    const { pid, processName, timestamp } = focusChangeEvent
+    const { pid, exeName, timestamp } = focusChangeEvent
     if (this.activeSessionCache !== null &&
       this.activeSessionCache.pid === pid &&
-      this.activeSessionCache.processName === processName) return
+      this.activeSessionCache.exeName === exeName) return
 
     await this._closeActiveSession(timestamp)
     await this._saveNewFocus(focusChangeEvent)
   }
 
-  async _saveNewFocus({ pid, path, processName, timestamp }) {
+  async _saveNewFocus({ pid, path, exeName, timestamp }) {
     const { Program, FocusSession } = this.dbConnection
-    const [program] = await Program.findCreateFind({ where: { name: processName } })
+    const [program] = await Program.findCreateFind({ where: { exeName: exeName } })
     const newActiveSession = {
       pid,
       path,
-      processName,
+      exeName,
       isActive: true,
       startTime: timestamp,
       ProgramId: program.id
