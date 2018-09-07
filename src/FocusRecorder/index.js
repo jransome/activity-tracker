@@ -16,7 +16,7 @@ export default class FocusRecorder extends EventEmitter {
     })
   }
 
-  async startRecording() {
+  startRecording() {
     if (!this.isRecording) {
       this.isRecording = true
       this._enqueueCheckDbClosedGracefully()
@@ -29,7 +29,7 @@ export default class FocusRecorder extends EventEmitter {
     if (!this.shuttingDown) {
       try {
         this.shuttingDown = true
-        this.shutdownPromise = this._triggerShutdown()
+        this.shutdownPromise = this._enqueueShutdown()
         await this.shutdownPromise
         this.shuttingDown = false
         this.isRecording = false
@@ -103,33 +103,21 @@ export default class FocusRecorder extends EventEmitter {
   }
 
   async _checkDbClosedGracefully() {
-    // TODO
-    // look at: sequelize logging/sqlite last modified, powershell shutdown timestamp
+    const activeFocusSessions = await this._getActiveSessions()
 
-    // const lastSnapshot = await this.dbConnection.Snapshot.findOne({ order: [['createdAt', 'DESC']], raw: true })
-
-    // if (lastSnapshot) {
-    //   const lastSnapshotTime = new Date(lastSnapshot.takenAt)
-    //   const extrapolatedShutdownTime = new Date(lastSnapshotTime.getTime() + 1)
-    //   await this._closeAllSessions(extrapolatedShutdownTime)
-    // }
+    if (activeFocusSessions.length > 0) {
+      console.log('WARNING: focus tracker was not shutdown properly. Removing unfinished sessions...')
+      this.dbConnection.FocusSession.destroy({ where: { isActive: true } })
+    }
   }
 
-  async _triggerShutdown() {
-    // console.log('enqueuing SHUTDOWN')
+  async _enqueueShutdown() {
     const stopRecordingTask = async () => await this._closeActiveSession()
     await this._enqueue(stopRecordingTask, 'SHUTDOWN', this.jobQueue.kill)
-    // return new Promise((resolve) => {
-    //   this.jobQueue.push(stopRecordingTask, () => {
-    //     this.jobQueue.kill()
-    //     resolve()
-    //   })
-    // })
   }
 
   async _closeActiveSession(timestamp = new Date()) {
-    const { FocusSession } = this.dbConnection
-    const activeFocusSession = await FocusSession.findOne({ where: { isActive: true } })
+    const [activeFocusSession] = await this._getActiveSessions()
 
     if (activeFocusSession) {
       const duration = timestamp - activeFocusSession.startTime
@@ -137,5 +125,9 @@ export default class FocusRecorder extends EventEmitter {
       const program = await activeFocusSession.getProgram()
       await program.update({ focusTime: program.focusTime + duration })
     }
+  }
+
+  async _getActiveSessions() {
+    return await this.dbConnection.FocusSession.findAll({ where: { isActive: true } })
   }
 }

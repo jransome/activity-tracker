@@ -91,6 +91,22 @@ describe('FocusRecorder', () => {
     })
   })
 
+  describe('cleaning db', () => {
+    it('cleans up the db if FocusRecorder was not shutdown properly', async () => {
+      // TODO: refactor setup
+      const previousActiveFocus = { pid: 1, processName: 'a.exe', timestamp: new Date('1990') }
+      mockPoller.mockResolvedValue(previousActiveFocus)
+      await recorder._enqueueSnapshot()
+
+      await recorder._enqueueCheckDbClosedGracefully()
+
+      const { programs, focusSessions } = await getAllfromDb()
+      expect.assertions(2)
+      expect(focusSessions).toHaveLength(0)
+      expect(programs).toHaveLength(1)
+    })
+  })
+
   describe('shutting down', () => {
     it('closes all open sessions when recording stops', async () => {
       const timestamp1 = new Date('1990')
