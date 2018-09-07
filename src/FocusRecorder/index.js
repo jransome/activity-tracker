@@ -20,7 +20,7 @@ export default class FocusRecorder extends EventEmitter {
     if (!this.isRecording) {
       this.isRecording = true
       this._enqueueCheckDbClosedGracefully()
-      //   this._enqueueSnapshot()
+      this._enqueueSnapshot()
     }
   }
 
@@ -57,6 +57,16 @@ export default class FocusRecorder extends EventEmitter {
     })
   }
 
+  async _enqueueSnapshot() {
+    const snapshotTask = async () => await this._recordSnapshot()
+    await this._enqueue(snapshotTask, 'SNAPSHOT')
+  }
+
+  async _recordSnapshot() {
+    const activeFocus = await this.getActiveWindow()
+    await this._saveNewFocus(activeFocus)
+  }
+
   async _enqueueFocusUpdate(focusEvent) {
     const updateTask = async () => await this._recordFocusChange(focusEvent)
     await this._enqueue(updateTask, 'FOCUS_UPDATE for ' + focusEvent.processName)
@@ -85,48 +95,6 @@ export default class FocusRecorder extends EventEmitter {
     }
     this.activeSessionCache = newActiveSession
     await FocusSession.create(newActiveSession)
-  }
-
-  _enqueueSnapshot() { //TODO pull out enqueuing logic
-    // console.log('enqueuing SNAPSHOT')
-    // return new Promise(resolve => { // <= used only for testing :/
-    //   const snapshotTask = async () => {
-    //     const snapshot = await this.pollProcesses()
-    //     try {
-    //       await this._recordSnapshot(snapshot)
-    //     } catch (error) {
-    //       console.log(error)
-    //     }
-    //   }
-    //   this.jobQueue.push(snapshotTask, () => console.log('processed initial snapshot') || resolve())
-    // })
-  }
-
-  async _recordSnapshot({ snapshot, timestamp }) {
-    // const { Program, ProgramSession, ProcessSession } = this.dbConnection
-    // for (const snapshottedProcess of snapshot) {
-    //   const [program] = await Program.findCreateFind({
-    //     where: { name: snapshottedProcess.name }
-    //   })
-    //   program.update({ isActive: true })
-
-    //   const [programSession] = await ProgramSession.findCreateFind({
-    //     where: {
-    //       isActive: true,
-    //       ProgramId: program.id,
-    //     },
-    //     defaults: { startTime: timestamp }
-    //   })
-
-    //   await ProcessSession.create({
-    //     pid: snapshottedProcess.pid,
-    //     name: snapshottedProcess.name,
-    //     isActive: true,
-    //     ProgramId: program.id,
-    //     ProgramSessionId: programSession.id,
-    //     startTime: timestamp,
-    //   })
-    // }
   }
 
   async _enqueueCheckDbClosedGracefully() {

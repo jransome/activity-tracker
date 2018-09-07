@@ -4,15 +4,18 @@ import purgeDb from '../helpers/purgeDb'
 import MockListener from '../helpers/mockListener'
 import queue from 'async/queue'
 
-const dbJobQueue = queue(async (task) => {
-  await task()
+const getAllfromDb = async () => ({
+  focusSessions: await db.FocusSession.findAll(),
+  programs: await db.Program.findAll(),
 })
 
 describe('FocusRecorder', () => {
+  let recorder;
   const mockPoller = jest.fn()
   const mockListener = new MockListener()
-  let recorder;
-
+  const dbJobQueue = queue(async (task) => {
+    await task()
+  })
   const delayStopRecording = (time) => {
     return new Promise(resolve => {
       setTimeout(async () => {
@@ -22,17 +25,31 @@ describe('FocusRecorder', () => {
     })
   }
 
-  const getAllfromDb = async () => ({
-    focusSessions: await db.FocusSession.findAll(),
-    programs: await db.Program.findAll(),
-  })
-
   beforeEach(async () => {
     recorder = new FocusRecorder(mockPoller, mockListener, dbJobQueue, db)
     await purgeDb(db)
   })
 
-  xdescribe('saving initial snapshot', () => { })
+  describe('saving initial snapshot', () => {
+    it('records the program that currently has focus', async () => {
+      const activeFocus = { pid: 1, processName: 'a.exe', timestamp: new Date('1990') }
+      mockPoller.mockResolvedValue(activeFocus)
+
+      await recorder._enqueueSnapshot()
+
+      const { programs, focusSessions } = await getAllfromDb()
+      expect.assertions(9)
+      expect(focusSessions).toHaveLength(1)
+      expect(focusSessions[0].pid).toEqual(activeFocus.pid)
+      expect(focusSessions[0].processName).toEqual(activeFocus.processName)
+      expect(focusSessions[0].startTime).toEqual(activeFocus.timestamp)
+      expect(focusSessions[0].isActive).toBeTruthy()
+      expect(focusSessions[0].ProgramId).toEqual(programs[0].id)
+      expect(programs).toHaveLength(1)
+      expect(programs[0].name).toEqual(activeFocus.processName)
+      expect(programs[0].focusTime).toBeNull()
+    })
+  })
 
   describe('saving focus changes', () => {
     it('records a new focus session', async () => {
@@ -43,6 +60,7 @@ describe('FocusRecorder', () => {
       await recorder._enqueueFocusUpdate(focusEvent1)
 
       const { programs, focusSessions } = await getAllfromDb()
+      expect.assertions(7)
       expect(focusSessions).toHaveLength(1)
       expect(focusSessions[0].isActive).toBeTruthy()
       expect(focusSessions[0].startTime).toEqual(timestamp)
@@ -62,6 +80,7 @@ describe('FocusRecorder', () => {
       await recorder._enqueueFocusUpdate(focusEvent2)
 
       const { programs, focusSessions } = await getAllfromDb()
+      expect.assertions(7)
       expect(focusSessions).toHaveLength(2)
       expect(focusSessions[0].isActive).toBeFalsy()
       expect(focusSessions[0].startTime).toEqual(timestamp1)
@@ -85,6 +104,7 @@ describe('FocusRecorder', () => {
       await delayStopRecording()
 
       const { focusSessions } = await getAllfromDb()
+      expect.assertions(5)
       expect(focusSessions).toHaveLength(1)
       expect(focusSessions[0].isActive).toBeFalsy()
       expect(focusSessions[0].startTime).toEqual(timestamp1)
@@ -102,13 +122,14 @@ describe('FocusRecorder', () => {
         new Date('1993'),
         new Date('1994'),
       ]
+      const activeFocus = { pid: 1, processName: 'a.exe', timestamp: timestamps[0] }
       const focusEvents = [
-        { pid: 1, processName: 'a.exe', timestamp: timestamps[0] },
         { pid: 2, processName: 'b.exe', timestamp: timestamps[1] },
         { pid: 3, processName: 'c.exe', timestamp: timestamps[2] },
         { pid: 2, processName: 'b.exe', timestamp: timestamps[3] },
         { pid: 3, processName: 'c.exe', timestamp: timestamps[4] },
       ]
+      mockPoller.mockResolvedValue(activeFocus)
       mockListener.setMockEvents(focusEvents)
 
       recorder.startRecording()
@@ -116,6 +137,7 @@ describe('FocusRecorder', () => {
       await delayStopRecording()
 
       const { programs, focusSessions } = await getAllfromDb()
+      expect.assertions(25)
       expect(focusSessions).toHaveLength(5)
       focusSessions.slice(0, 4).forEach((fs, i) => {
         expect(fs.isActive).toBeFalsy()

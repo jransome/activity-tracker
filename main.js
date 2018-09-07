@@ -3,6 +3,7 @@ import dbConnection from './src/models'
 import pollProcesses from './src/pollProcesses'
 import ProcessListener from './src/ProcessListener'
 import ProcessRecorder from './src/ProcessRecorder'
+import pollFocus from './src/pollFocus'
 import FocusListener from './src/FocusListener'
 import FocusRecorder from './src/FocusRecorder'
 
@@ -13,7 +14,6 @@ const dbJobQueue = queue(async (task) => {
 })
 
 // listen for focus changes
-const pollFocus = 'TODO' // placeholder
 const focusListener = new FocusListener()
 const focusRecorder = new FocusRecorder(pollFocus, focusListener, dbJobQueue, dbConnection)
 
