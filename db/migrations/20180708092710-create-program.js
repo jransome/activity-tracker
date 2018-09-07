@@ -17,10 +17,10 @@ module.exports = {
         type: Sequelize.DATE
       },
       focusTime: {
-        type: Sequelize.INTEGER
+        type: Sequelize.BIGINT.UNSIGNED
       },
       upTime: {
-        type: Sequelize.INTEGER
+        type: Sequelize.BIGINT.UNSIGNED
       },
       updatedAt: {
         allowNull: false,

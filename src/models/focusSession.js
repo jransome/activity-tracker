@@ -5,7 +5,7 @@ export default (sequelize, DataTypes) => {
     isActive: DataTypes.BOOLEAN,
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,
-    duration: DataTypes.INTEGER
+    duration: DataTypes.BIGINT.UNSIGNED,
   }, {})
 
   FocusSession.associate = (models) => {

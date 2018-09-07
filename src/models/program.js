@@ -2,7 +2,7 @@ export default (sequelize, DataTypes) => {
   const Program = sequelize.define('Program', {
     name: DataTypes.STRING,
     upTime: DataTypes.INTEGER,
-    focusTime: DataTypes.INTEGER,
+    focusTime: DataTypes.BIGINT.UNSIGNED,
   }, {})
 
   Program.associate = (models) => {

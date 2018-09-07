@@ -35,7 +35,7 @@ module.exports = {
         type: Sequelize.DATE
       },
       duration: {
-        type: Sequelize.INTEGER
+        type: Sequelize.BIGINT.UNSIGNED
       },
       createdAt: {
         allowNull: false,
