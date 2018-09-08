@@ -1,37 +1,11 @@
 import { app, BrowserWindow } from 'electron'
 import dbConnection from './src/models'
-import pollProcesses from './src/pollProcesses'
-import ProcessListener from './src/ProcessListener'
-import ProcessRecorder from './src/ProcessRecorder'
-import pollFocus from './src/pollFocus'
-import FocusListener from './src/FocusListener'
-import FocusRecorder from './src/FocusRecorder'
 
-import queue from 'async/queue'
+import MainRecorder, { RECORDING_MODES } from './src/MainRecorder'
 
-const dbJobQueue = queue(async (task) => {
-  await task()
-})
+const mainRecorder = new MainRecorder(dbConnection)
 
-// listen for focus changes
-const focusListener = new FocusListener()
-const focusRecorder = new FocusRecorder(pollFocus, focusListener, dbJobQueue, dbConnection)
-
-// listen for processes
-// const processListener = new ProcessListener()
-// const processRecorder = new ProcessRecorder(pollProcesses, processListener, dbJobQueue, dbConnection)
-
-init()
-
-function init() {
-  focusRecorder.startRecording()
-  // processRecorder.startRecording()
-}
-
-async function stopRecording() {
-  await focusRecorder.stopRecording()
-  // await processRecorder.stopRecording()
-}
+mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
 
 // app
 let mainWindow
@@ -55,7 +29,7 @@ const createWindow = () => {
 app.on('ready', createWindow)
 
 app.on('window-all-closed', async () => {
-  await stopRecording()
+  await mainRecorder.stopRecording()
   if (process.platform !== 'darwin') app.quit()
 })
 
