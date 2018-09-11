@@ -35,9 +35,6 @@ module.exports = {
       exeName: {
         type: Sequelize.STRING
       },
-      pidName: {
-        type: Sequelize.STRING
-      },
       isActive: {
         type: Sequelize.BOOLEAN
       },

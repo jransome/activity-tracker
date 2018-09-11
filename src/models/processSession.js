@@ -2,7 +2,6 @@ export default (sequelize, DataTypes) => {
   const ProcessSession = sequelize.define('ProcessSession', {
     pid: DataTypes.INTEGER,
     exeName: DataTypes.STRING,
-    pidName: DataTypes.STRING,
     isActive: DataTypes.BOOLEAN,
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE
