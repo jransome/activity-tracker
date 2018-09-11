@@ -16,6 +16,7 @@
   "dependencies": {
     "async": "^2.6.1",
     "electron": "^2.0.3",
+    "node-excel-export": "^1.4.4",
     "process-list": "^1.2.3",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
@@ -25,6 +26,7 @@
     "babel-preset-es2015": "^6.24.1",
     "babel-register": "^6.26.0",
     "electron-builder": "^20.18.0",
+    "electron-packager": "^12.1.1",
     "jest": "^23.4.1"
   }
 }

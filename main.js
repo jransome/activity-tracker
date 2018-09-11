@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import dbConnection from './src/models'
-
 import MainRecorder, { RECORDING_MODES } from './src/MainRecorder'
+import exportSpreadsheet from './src/exportSpreadsheet'
 
 const mainRecorder = new MainRecorder(dbConnection)
 
@@ -30,6 +30,7 @@ app.on('ready', createWindow)
 
 app.on('window-all-closed', async () => {
   await mainRecorder.stopRecording()
+  await exportSpreadsheet(dbConnection)
   if (process.platform !== 'darwin') app.quit()
 })
 

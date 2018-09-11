@@ -9,7 +9,7 @@ export default class FocusListener extends EventEmitter {
     const startMonitoringScript = `${psScriptsDir}/focus-monitor-start.ps1 \n`
     this._stopMonitoringScript = `${psScriptsDir}/focus-monitor-stop.ps1 \n`
 
-    const args = ['-ExecutionPolicy', 'Unrestricted']//, '-NoLogo', '-NoExit', '-InputFormat', 'Text', '-Command', '-']
+    const args = ['-ExecutionPolicy', 'Unrestricted', '-NoLogo', '-NoExit', '-InputFormat', 'Text', '-Command', '-']
     this._psProc = spawn('powershell.exe', args)
 
     if (!this._psProc.pid) throw new Error("Powershell child process did not start")
