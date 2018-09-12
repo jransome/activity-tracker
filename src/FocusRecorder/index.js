@@ -50,7 +50,8 @@ export default class FocusRecorder extends EventEmitter {
       console.log('enqueuing...', log)
       this.jobQueue.push(job, err => {
         if (err) console.error(err)
-        console.log('processed...', log)
+        console.log('processed ', log)
+        this.emit('log', 'processed' + log)
         if (cb) cb()
         resolve()
       })

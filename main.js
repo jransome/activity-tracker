@@ -5,8 +5,6 @@ import exportSpreadsheet from './src/exportSpreadsheet'
 
 const mainRecorder = new MainRecorder(dbConnection)
 
-mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
-
 // app
 let mainWindow
 
@@ -19,6 +17,11 @@ const createWindow = () => {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
+    mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
+  })
+
+  mainRecorder.on('focus-recorder-log', log => {
+    if (mainWindow) mainWindow.webContents.send('log-update', log)
   })
 
   mainWindow.on('closed', () => {

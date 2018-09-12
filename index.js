@@ -1,12 +1,10 @@
-var { ipcRenderer } = require('electron')
+const { ipcRenderer } = require('electron')
 
-const processList = document.querySelector('#process-list')
+const logList = document.querySelector('#logs')
 
-ipcRenderer.on('update-programs', (event, programs) => {
-    console.log('receiving', event)
-    programs.forEach(program => {
-      let processElm = document.createElement('li')
-      processElm.textContent = JSON.stringify(program)
-      processList.appendChild(processElm)
-    })
+ipcRenderer.on('log-update', (event, log) => {
+  console.log('receiving', event)
+  const newLog = document.createElement('li')
+  newLog.textContent = log
+  logList.appendChild(newLog)
 })
