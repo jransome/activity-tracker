@@ -3,7 +3,7 @@ const path = require('path')
 const Sequelize = require('sequelize')
 const Umzug = require('umzug')
 
-const runMigrations = async (sequelize, appPath) => {
+const runMigrations = async (sequelize, appDir) => {
   const umzug = new Umzug({
     storage: 'sequelize',
     storageOptions: {
@@ -17,7 +17,7 @@ const runMigrations = async (sequelize, appPath) => {
           throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.')
         }
       ],
-      path: `${appPath}/db/migrations`,
+      path: `${appDir}/db/migrations`,
       pattern: /\.js$/
     }
   })
@@ -25,20 +25,18 @@ const runMigrations = async (sequelize, appPath) => {
     await umzug.up()
     console.log('Migration complete!')
   } catch (error) {
-    console.log('migrations', error)
+    console.log('Error on db migration: ', error)
   }
 }
 
-const initDb = async (config, userDataPath, appPath) => {
+const initDb = async (config, appDir) => {
   const basename = path.basename(__filename)
-  const env = process.env.NODE_ENV || 'production'
-  const dbConfig = config[env]
   const db = {}
-  if (env === 'production') dbConfig.storage = `${userDataPath}/db.sqlite3`
 
-  const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, dbConfig)
+  const { database, username, password } = config
+  const sequelize = new Sequelize(database, username, password, config)
 
-  await runMigrations(sequelize, appPath)
+  await runMigrations(sequelize, appDir)
 
   fs.readdirSync(__dirname)
     .filter(file => {
@@ -53,7 +51,7 @@ const initDb = async (config, userDataPath, appPath) => {
     if (db[modelName].associate) db[modelName].associate(db)
   })
 
-  sequelize.query("PRAGMA journal_mode=WAL;") // use wal
+  await sequelize.query("PRAGMA journal_mode=WAL;") // use wal
 
   db.sequelize = sequelize
   db.Sequelize = Sequelize

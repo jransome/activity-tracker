@@ -4,23 +4,22 @@ const initDb = require('./src/models')
 const { MainRecorder, RECORDING_MODES } = require('./src/MainRecorder')
 const exportSpreadsheet = require('./src/exportSpreadsheet')
 
-const userDataPath = app.getPath('userData')
+const { userDocumentsPath } = config
 let dbConnection
 let mainRecorder
 let mainWindow
 
 async function startup() {
   const appDir = app.getAppPath()
-  dbConnection = await initDb(config, userDataPath, appDir)
+  dbConnection = await initDb(config, appDir)
   mainRecorder = new MainRecorder(dbConnection, appDir)
 }
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({ width: 800, height: 600, show: false })
   mainWindow.loadFile('index.html')
-  
+
   mainWindow.webContents.openDevTools()
-  mainWindow.webContents.send('console-log', userDataPath)
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
@@ -41,14 +40,18 @@ const createWindow = () => {
 }
 
 app.on('ready', async () => {
-  await startup()
-  createWindow()
+  try {
+    await startup()
+    createWindow()
+  } catch (error) {
+    console.log('Startup error: ', error)
+  }
 })
 
 app.on('window-all-closed', async () => {
   await mainRecorder.stopRecording()
   try {
-    await exportSpreadsheet(dbConnection, app.getPath('documents'))
+    await exportSpreadsheet(dbConnection, userDocumentsPath)
   } catch (error) {
     console.log('Exporting spreadsheet error: ' + error)
   }
