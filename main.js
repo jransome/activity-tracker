@@ -47,7 +47,11 @@ app.on('ready', async () => {
 
 app.on('window-all-closed', async () => {
   await mainRecorder.stopRecording()
-  await exportSpreadsheet(dbConnection, app.getPath('documents'))
+  try {
+    await exportSpreadsheet(dbConnection, app.getPath('documents'))
+  } catch (error) {
+    console.log('Exporting spreadsheet error: ' + error)
+  }
   if (process.platform !== 'darwin') app.quit()
 })
 

@@ -1,5 +1,5 @@
-create logs dir in documents if not exist
 production env var
+reorder recorder starting/window showing on startup 
 Error handling
 Not starting listeners on instantiation
 Stopping listeners

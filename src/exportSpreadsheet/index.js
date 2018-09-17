@@ -3,7 +3,7 @@ const excel = require('node-excel-export')
 
 const styles = { header: { font: { bold: true } } }
 
-const getTables = (db) => {
+const getTablesFromDb = (db) => {
   const tables = []
 
   for (const tableName in db) {
@@ -36,23 +36,37 @@ const createWorksheet = async ({ tableName, table }) => {
   }
 }
 
-const exportSpreadsheet = (db, userDocumentsPath) => new Promise(async (resolve, reject) => {
-  const tables = getTables(db)
-
-  const worksheets = await Promise.all(tables.map((t) => createWorksheet(t)))
-
-  const xls = excel.buildExport(worksheets)
-
-  const filename = `${userDocumentsPath}/Activity Monitor logs/log-${Date.now()}.xlsx`
-
-  fs.writeFile(filename, xls, 'binary', (err) => {
-    if (err) {
-      reject(err)
-    } else {
-      console.log('Exported db to ' + filename)
-      resolve()
+const saveLogFile = (logDir, filename, xls) => new Promise((resolve, reject) => {
+  fs.mkdir('logDir', (err) => {
+    if (err.code !== 'EEXIST') {
+      reject("Failed to make logs directory: " + err)
+      return
     }
+
+    const filepath = `${logDir}/${filename}`
+
+    fs.writeFile(filepath, xls, 'binary', (err) => {
+      if (err) {
+        reject(err)
+        return
+      }
+      console.log('Exported db to ' + filepath)
+      resolve()
+    })
   })
 })
+
+
+const exportSpreadsheet = async (db, userDocumentsPath) => {
+  const tables = getTablesFromDb(db)
+
+  const worksheets = await Promise.all(tables.map((t) => createWorksheet(t)))
+  const xls = excel.buildExport(worksheets)
+
+  const logDir = `${userDocumentsPath}/Activity Monitor logs`
+  const filename = `log-${Date.now()}.xlsx`
+
+  await saveLogFile(logDir, filename, xls)
+}
 
 module.exports = exportSpreadsheet
