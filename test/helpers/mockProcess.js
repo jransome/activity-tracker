@@ -1,1 +1,1 @@
-export default (pid, name, starttime = new Date) => ({ pid, name, starttime })
+module.exports = (pid, name, starttime = new Date) => ({ pid, name, starttime })

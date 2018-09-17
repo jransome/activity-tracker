@@ -1,0 +1,9 @@
+create logs dir in documents if not exist
+production env var
+Error handling
+Not starting listeners on instantiation
+Stopping listeners
+Refactoring listeners/pollers
+remove babel
+Refactor out process polling dependency
+

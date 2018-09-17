@@ -1,19 +1,26 @@
-import { app, BrowserWindow } from 'electron'
-import dbConnection from './src/models'
-import MainRecorder, { RECORDING_MODES } from './src/MainRecorder'
-import exportSpreadsheet from './src/exportSpreadsheet'
+const { app, BrowserWindow } = require('electron')
+const config = require('./config')
+const initDb = require('./src/models')
+const { MainRecorder, RECORDING_MODES } = require('./src/MainRecorder')
+const exportSpreadsheet = require('./src/exportSpreadsheet')
 
-const mainRecorder = new MainRecorder(dbConnection)
-
-// app
+const userDataPath = app.getPath('userData')
+let dbConnection
+let mainRecorder
 let mainWindow
+
+async function startup() {
+  const appDir = app.getAppPath()
+  dbConnection = await initDb(config, userDataPath, appDir)
+  mainRecorder = new MainRecorder(dbConnection, appDir)
+}
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({ width: 800, height: 600, show: false })
-
   mainWindow.loadFile('index.html')
-
+  
   mainWindow.webContents.openDevTools()
+  mainWindow.webContents.send('console-log', userDataPath)
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
@@ -24,16 +31,23 @@ const createWindow = () => {
     if (mainWindow) mainWindow.webContents.send('log-update', log)
   })
 
+  mainRecorder.on('console-log', log => {
+    if (mainWindow) mainWindow.webContents.send('console-log', log)
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })
 }
 
-app.on('ready', createWindow)
+app.on('ready', async () => {
+  await startup()
+  createWindow()
+})
 
 app.on('window-all-closed', async () => {
   await mainRecorder.stopRecording()
-  await exportSpreadsheet(dbConnection)
+  await exportSpreadsheet(dbConnection, app.getPath('documents'))
   if (process.platform !== 'darwin') app.quit()
 })
 

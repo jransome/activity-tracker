@@ -1,33 +1,36 @@
-import { EventEmitter } from 'events'
-import queue from 'async/queue'
+const { EventEmitter } = require('events')
+const queue = require('async/queue')
 
-import pollProcesses from '../pollProcesses'
-import ProcessListener from '../ProcessListener'
-import ProcessRecorder from '../ProcessRecorder'
+const pollProcesses = require('../pollProcesses')
+const ProcessListener = require('../ProcessListener')
+const ProcessRecorder = require('../ProcessRecorder')
 
-import pollFocus from '../pollFocus'
-import FocusListener from '../FocusListener'
-import FocusRecorder from '../FocusRecorder'
+const focusPoller = require('../pollFocus')
+const FocusListener = require('../FocusListener')
+const FocusRecorder = require('../FocusRecorder')
 
 const FOCUS_RECORDER = 'FOCUS_RECORDER'
 const PROCESS_RECORDER = 'PROCESS_RECORDER'
 
-export const RECORDING_MODES = {
+const RECORDING_MODES = {
   FOCUS_ONLY: [FOCUS_RECORDER],
   PROCESS_ONLY: [PROCESS_RECORDER],
   FOCUS_AND_PROCESS: [FOCUS_RECORDER, PROCESS_RECORDER],
 }
 
-export default class MainRecorder extends EventEmitter {
-  constructor(dbConnection) {
+class MainRecorder extends EventEmitter {
+  constructor(dbConnection, appDir) {
     super()
+    this.emit('console-log', "Main constructed")
+    
     const dbJobQueue = queue(async task => await task())
 
-    this.focusListener = new FocusListener()
+    const pollFocus = focusPoller(appDir)
+    this.focusListener = new FocusListener(appDir)
     this[FOCUS_RECORDER] = new FocusRecorder(pollFocus, this.focusListener, dbJobQueue, dbConnection)
     this[FOCUS_RECORDER].on('log', log => this.emit('focus-recorder-log', log))
 
-    this.processListener = new ProcessListener()
+    this.processListener = new ProcessListener(appDir)
     this[PROCESS_RECORDER] = new ProcessRecorder(pollProcesses, this.processListener, dbJobQueue, dbConnection)
   }
 
@@ -44,4 +47,9 @@ export default class MainRecorder extends EventEmitter {
       await this[recordType].stopRecording()
     }
   }
+}
+
+module.exports = { 
+  MainRecorder,
+  RECORDING_MODES,
 }

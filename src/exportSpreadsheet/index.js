@@ -1,5 +1,5 @@
-import fs from 'fs'
-import excel from 'node-excel-export'
+const fs = require('fs')
+const excel = require('node-excel-export')
 
 const styles = { header: { font: { bold: true } } }
 
@@ -36,14 +36,14 @@ const createWorksheet = async ({ tableName, table }) => {
   }
 }
 
-export default (db) => new Promise(async (resolve, reject) => {
+const exportSpreadsheet = (db, userDocumentsPath) => new Promise(async (resolve, reject) => {
   const tables = getTables(db)
 
   const worksheets = await Promise.all(tables.map((t) => createWorksheet(t)))
 
   const xls = excel.buildExport(worksheets)
 
-  const filename = `./xls/data-${Date.now()}.xlsx`
+  const filename = `${userDocumentsPath}/Activity Monitor logs/log-${Date.now()}.xlsx`
 
   fs.writeFile(filename, xls, 'binary', (err) => {
     if (err) {
@@ -54,3 +54,5 @@ export default (db) => new Promise(async (resolve, reject) => {
     }
   })
 })
+
+module.exports = exportSpreadsheet

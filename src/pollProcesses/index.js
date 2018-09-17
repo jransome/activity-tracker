@@ -1,6 +1,6 @@
-import processPoller from 'process-list' // this package does not install correctly on mac, commented out when developing on mac
+const processPoller = require('process-list') // this package does not install correctly on mac, commented out when developing on mac
 
-export default async () => {
+module.exports = async () => {
   const fields = ['pid', 'name', 'path'] // TODO: use path?
   return {
     timestamp: new Date(),

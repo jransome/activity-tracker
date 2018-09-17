@@ -1,6 +1,6 @@
-import { EventEmitter } from 'events'
+const { EventEmitter } = require('events')
 
-export default class MockListener extends EventEmitter {
+class MockListener extends EventEmitter {
   setMockEvents(mockEvents) {
     this.mockEvents = mockEvents
   }
@@ -11,3 +11,5 @@ export default class MockListener extends EventEmitter {
     })
   }
 }
+
+module.exports = MockListener

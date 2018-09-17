@@ -1,7 +1,7 @@
-import { spawn } from 'child_process'
-import { EventEmitter } from 'events'
+const { spawn } = require('child_process')
+const { EventEmitter } = require('events')
 
-export default class ProcessListener extends EventEmitter {
+module.exports = class ProcessListener extends EventEmitter {
   constructor() {
     super()
     const encoding = 'utf8' // encoding for strings not buffers (as is default)

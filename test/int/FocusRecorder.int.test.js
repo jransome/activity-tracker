@@ -1,15 +1,11 @@
-import FocusRecorder from '../../src/FocusRecorder'
-import db from '../../src/models'
-import purgeDb from '../helpers/purgeDb'
-import MockListener from '../helpers/mockListener'
-import queue from 'async/queue'
-
-const getAllfromDb = async () => ({
-  focusSessions: await db.FocusSession.findAll(),
-  programs: await db.Program.findAll(),
-})
+const FocusRecorder = require('../../src/FocusRecorder')
+const initDb = require('../../src/models')
+const purgeDb = require('../helpers/purgeDb')
+const MockListener = require('../helpers/mockListener')
+const queue = require('async/queue')
 
 describe('FocusRecorder', () => {
+  let db;
   let recorder;
   let mockPoller;
   let mockListener;
@@ -21,7 +17,11 @@ describe('FocusRecorder', () => {
       }, time)
     })
   }
-  
+
+  beforeAll(async () => {
+    db = await initDb()
+  })
+
   beforeEach(async () => {
     mockPoller = jest.fn()
     mockListener = new MockListener()
@@ -30,6 +30,11 @@ describe('FocusRecorder', () => {
     })
     recorder = new FocusRecorder(mockPoller, mockListener, dbJobQueue, db)
     await purgeDb(db)
+  })
+
+  const getAllfromDb = async () => ({
+    focusSessions: await db.FocusSession.findAll(),
+    programs: await db.Program.findAll(),
   })
 
   describe('saving initial snapshot', () => {

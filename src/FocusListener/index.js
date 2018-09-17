@@ -1,11 +1,11 @@
-import { spawn } from 'child_process'
-import { EventEmitter } from 'events'
+const { spawn } = require('child_process')
+const { EventEmitter } = require('events')
 
-export default class FocusListener extends EventEmitter {
-  constructor() {
+class FocusListener extends EventEmitter {
+  constructor(appDir) {
     super()
     const encoding = 'utf8' // encoding for strings not buffers (as is default)
-    const psScriptsDir = './src/powershell'
+    const psScriptsDir = `${appDir}/src/powershell`
     const startMonitoringScript = `${psScriptsDir}/focus-monitor-start.ps1 \n`
     this._stopMonitoringScript = `${psScriptsDir}/focus-monitor-stop.ps1 \n`
 
@@ -25,6 +25,7 @@ export default class FocusListener extends EventEmitter {
     this._psProc.stdin.write(startMonitoringScript, () => this.emit('ready'))
 
     this._psProc.stdout.on('data', (data) => {
+      this.emit('console-log', data)
       try {
         const output = data.split('_FOCUS_CHANGE_') // TODO: refactor
         if (this._validate(output)) {
@@ -57,3 +58,5 @@ export default class FocusListener extends EventEmitter {
     return (event.length === 2)
   }
 }
+
+module.exports = FocusListener

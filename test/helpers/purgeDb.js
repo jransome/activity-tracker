@@ -1,4 +1,4 @@
-export default async (db) => {
+module.exports = async (db) => {
   const models = Object.keys(db)
   models.forEach(async (key) => {
     if (key.toLowerCase() === 'sequelize') return null

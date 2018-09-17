@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   const FocusSession = sequelize.define('FocusSession', {
     pid: DataTypes.INTEGER,
     exeName: DataTypes.STRING,

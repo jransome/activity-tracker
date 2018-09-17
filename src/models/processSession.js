@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   const ProcessSession = sequelize.define('ProcessSession', {
     pid: DataTypes.INTEGER,
     exeName: DataTypes.STRING,

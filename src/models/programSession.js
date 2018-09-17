@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   const ProgramSession = sequelize.define('ProgramSession', {
     startTime: DataTypes.DATE,
     isActive: DataTypes.BOOLEAN,

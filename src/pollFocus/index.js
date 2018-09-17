@@ -1,10 +1,8 @@
 const { spawn } = require('child_process')
-// import { spawn } from 'child_process'
 
-export default () => new Promise((resolve, reject) => {
-// const x = () => new Promise((resolve, reject) => {
+module.exports = (appDir) => () => new Promise((resolve, reject) => {
   const encoding = 'utf8' // encoding for strings not buffers (as is default)
-  const psScriptsDir = './src/powershell'
+  const psScriptsDir = `${appDir}/src/powershell`
   const pollingScript = `${psScriptsDir}/get-current-focus.ps1 \n`
 
   const args = ['-ExecutionPolicy', 'Unrestricted']
@@ -17,7 +15,7 @@ export default () => new Promise((resolve, reject) => {
   })
 
   psProc.stderr.on('data', (data) => {
-    reject('powershell-error: ' + data)
+    reject('poll-focus-powershell-error: ' + data)
   })
 
   psProc.stdin.setDefaultEncoding(encoding)
@@ -38,5 +36,3 @@ export default () => new Promise((resolve, reject) => {
     }
   })
 })
-
-// x().then(out => console.log(out))

@@ -1,4 +1,4 @@
-export default (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes) => {
   const Program = sequelize.define('Program', {
     exeName: DataTypes.STRING,
     upTime: DataTypes.INTEGER,

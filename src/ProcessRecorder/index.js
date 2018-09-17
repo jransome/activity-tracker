@@ -1,6 +1,6 @@
-import { EventEmitter } from 'events'
+const { EventEmitter } = require('events')
 
-export default class ProcessRecorder extends EventEmitter {
+module.exports = class ProcessRecorder extends EventEmitter {
   constructor(processPoller, processListener, dbJobQueue, dbConnection) {
     super()
     this.pollProcesses = processPoller
