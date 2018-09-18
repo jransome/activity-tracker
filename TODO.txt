@@ -1,4 +1,3 @@
-remove babel
 ensure singleton instance
 add start/stop recording controls to ui
 minimise to system tray
