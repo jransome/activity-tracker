@@ -2,7 +2,7 @@ const { spawn } = require('child_process')
 
 module.exports = (appDir) => () => new Promise((resolve, reject) => {
   const encoding = 'utf8' // encoding for strings not buffers (as is default)
-  const psScriptsDir = `${appDir}/src/powershell`
+  const psScriptsDir = `${appDir}/src/powershell/focus`
   const pollingScript = `${psScriptsDir}/get-current-focus.ps1 \n`
 
   const args = ['-ExecutionPolicy', 'Unrestricted']

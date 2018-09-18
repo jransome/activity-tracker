@@ -5,7 +5,7 @@ class FocusListener extends EventEmitter {
   constructor(appDir) {
     super()
     const encoding = 'utf8' // encoding for strings not buffers (as is default)
-    const psScriptsDir = `${appDir}/src/powershell`
+    const psScriptsDir = `${appDir}/src/powershell/focus`
     const startMonitoringScript = `${psScriptsDir}/focus-monitor-start.ps1 \n`
     this._stopMonitoringScript = `${psScriptsDir}/focus-monitor-stop.ps1 \n`
 

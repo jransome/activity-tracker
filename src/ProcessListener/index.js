@@ -2,13 +2,13 @@ const { spawn } = require('child_process')
 const { EventEmitter } = require('events')
 
 module.exports = class ProcessListener extends EventEmitter {
-  constructor() {
+  constructor(appDir) {
     super()
     const encoding = 'utf8' // encoding for strings not buffers (as is default)
     const startEventIdentifier = 'startevent'
     const stopEventIdentifier = 'stopevent'
-    const psScriptsDir = './src/powershell'
     const psScriptArgs = `-StartEventIdentifier ${startEventIdentifier} -StopEventIdentifier ${stopEventIdentifier}`
+    const psScriptsDir = `${appDir}/src/powershell/process`
     const registerEventsScript = `${psScriptsDir}/register-events.ps1 ${psScriptArgs}\n`
     this._unregisterEventsScript = `${psScriptsDir}/unregister-events.ps1 ${psScriptArgs}\n`
 
