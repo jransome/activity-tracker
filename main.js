@@ -9,12 +9,20 @@ let dbConnection
 let mainRecorder
 let mainWindow
 
+const instanceAlreadyRunning = app.makeSingleInstance(() => {
+  if (!mainWindow) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.focus()
+})
+
+if (instanceAlreadyRunning) app.quit()
+
 async function startup() {
   const appDir = app.getAppPath()
   dbConnection = await initDb(config, appDir)
   mainRecorder = new MainRecorder(dbConnection, appDir)
   mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
-
+  
   mainRecorder.on('focus-recorder-log', log => {
     if (mainWindow) mainWindow.webContents.send('log-update', log)
   })
@@ -25,11 +33,11 @@ const createWindow = () => {
   mainWindow.loadFile('index.html')
 
   mainWindow.webContents.openDevTools()
-
+  
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
   })
-
+  
   mainWindow.on('closed', () => {
     mainWindow = null
   })
