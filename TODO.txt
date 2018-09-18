@@ -1,8 +1,9 @@
-reorder recorder starting/window showing on startup 
 remove babel
 ensure singleton instance
+add start/stop recording controls to ui
 minimise to system tray
 detect user idle time
+refactor/create ui logging class
 Error handling
 Not starting listeners on instantiation
 Stopping listeners

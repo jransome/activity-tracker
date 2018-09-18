@@ -21,8 +21,6 @@ const RECORDING_MODES = {
 class MainRecorder extends EventEmitter {
   constructor(dbConnection, appDir) {
     super()
-    this.emit('console-log', "Main constructed")
-    
     const dbJobQueue = queue(async task => await task())
 
     const pollFocus = focusPoller(appDir)

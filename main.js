@@ -13,6 +13,11 @@ async function startup() {
   const appDir = app.getAppPath()
   dbConnection = await initDb(config, appDir)
   mainRecorder = new MainRecorder(dbConnection, appDir)
+  mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
+
+  mainRecorder.on('focus-recorder-log', log => {
+    if (mainWindow) mainWindow.webContents.send('log-update', log)
+  })
 }
 
 const createWindow = () => {
@@ -23,15 +28,6 @@ const createWindow = () => {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
-    mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
-  })
-
-  mainRecorder.on('focus-recorder-log', log => {
-    if (mainWindow) mainWindow.webContents.send('log-update', log)
-  })
-
-  mainRecorder.on('console-log', log => {
-    if (mainWindow) mainWindow.webContents.send('console-log', log)
   })
 
   mainWindow.on('closed', () => {
@@ -39,10 +35,10 @@ const createWindow = () => {
   })
 }
 
-app.on('ready', async () => {
+app.on('ready', () => {
   try {
-    await startup()
     createWindow()
+    startup()
   } catch (error) {
     console.log('Startup error: ', error)
   }

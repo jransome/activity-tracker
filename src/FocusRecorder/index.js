@@ -3,7 +3,6 @@ const { EventEmitter } = require('events')
 class FocusRecorder extends EventEmitter {
   constructor(focusPoller, focusListener, dbJobQueue, dbConnection) {
     super()
-    this.emit('console-log', "Focus Constructed")
     this.getActiveWindow = focusPoller
     this.dbConnection = dbConnection
     this.isRecording = false
@@ -13,17 +12,11 @@ class FocusRecorder extends EventEmitter {
     this.jobQueue = dbJobQueue
 
     focusListener.on('listener-event', (focusChangeEvent) => {
-      this.emit('console-log', "new focus")
-
       if (this.isRecording && !this.shuttingDown) this._enqueueFocusUpdate(focusChangeEvent)
     })
-
-    dbConnection.FocusSession.findAll().then(d => console.log(d.length))
   }
 
   startRecording() {
-    this.emit('console-log', "Focus recorder Started")
-
     if (!this.isRecording) {
       this.isRecording = true
       this._enqueueCheckDbClosedGracefully()

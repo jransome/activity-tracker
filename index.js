@@ -7,7 +7,3 @@ ipcRenderer.on('log-update', (event, log) => {
   newLog.textContent = log
   logList.appendChild(newLog)
 })
-
-ipcRenderer.on('console-log', (event, log) => {
-  console.log(log)
-})

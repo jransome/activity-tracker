@@ -25,7 +25,6 @@ class FocusListener extends EventEmitter {
     this._psProc.stdin.write(startMonitoringScript, () => this.emit('ready'))
 
     this._psProc.stdout.on('data', (data) => {
-      this.emit('console-log', data)
       try {
         const output = data.split('_FOCUS_CHANGE_') // TODO: refactor
         if (this._validate(output)) {
