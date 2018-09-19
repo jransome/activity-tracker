@@ -1,3 +1,4 @@
+electron logs
 add start/stop recording controls to ui
 minimise to system tray
 timezones/BST/GMT?

@@ -1,13 +1,13 @@
 const { EventEmitter } = require('events')
 const queue = require('async/queue')
 
-const pollProcesses = require('../pollProcesses')
-const ProcessListener = require('../ProcessListener')
-const ProcessRecorder = require('../ProcessRecorder')
+const pollProcesses = require('../process/pollProcesses')
+const processListener = require('../process/processListener')
+const ProcessRecorder = require('../process/ProcessRecorder')
 
-const pollFocus = require('../pollFocus')
-const FocusListener = require('../FocusListener')
-const FocusRecorder = require('../FocusRecorder')
+const pollFocus = require('../focus/pollFocus')
+const focusListener = require('../focus/focusListener')
+const FocusRecorder = require('../focus/FocusRecorder')
 
 const FOCUS_RECORDER = 'FOCUS_RECORDER'
 const PROCESS_RECORDER = 'PROCESS_RECORDER'
@@ -23,12 +23,10 @@ class MainRecorder extends EventEmitter {
     super()
     const dbJobQueue = queue(async task => await task())
 
-    this.focusListener = new FocusListener()
-    this[FOCUS_RECORDER] = new FocusRecorder(pollFocus, this.focusListener, dbJobQueue, models)
+    this[FOCUS_RECORDER] = new FocusRecorder(pollFocus, focusListener, dbJobQueue, models)
     this[FOCUS_RECORDER].on('log', log => this.emit('focus-recorder-log', log))
 
-    this.processListener = new ProcessListener()
-    this[PROCESS_RECORDER] = new ProcessRecorder(pollProcesses, this.processListener, dbJobQueue, models)
+    this[PROCESS_RECORDER] = new ProcessRecorder(pollProcesses, processListener, dbJobQueue, models)
   }
 
   startRecording(mode) {

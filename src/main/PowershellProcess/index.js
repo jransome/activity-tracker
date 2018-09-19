@@ -1,21 +1,14 @@
 const { spawn } = require('child_process')
 const { EventEmitter } = require('events')
 
-// TODO: refactor error objects
-// class PowershellProcessError extends Error {
-//   constructor(psError) {
-//     super("")
-//     Error.captureStackTrace(this, PowershellProcessError) // Eliminates error constructor from stack trace
-//   }
-// }
-
 class PowershellProcess extends EventEmitter {
-  constructor(args, startScript, stopScript) {
+  constructor(dataHandler, psArgs, startScript, stopScript) {
     super()
 
+    this.isRunning = false
     this.startScript = startScript
     this.stopScript = stopScript
-    this._psProc = spawn('powershell.exe', args)
+    this._psProc = spawn('powershell.exe', psArgs)
 
     if (!this._psProc.pid) {
       throw Object.assign(new Error("Powershell child process did not start"), {
@@ -33,26 +26,28 @@ class PowershellProcess extends EventEmitter {
     this._setEncoding()
 
     this._psProc.stderr.on('data', (err) => {
-      throw Object.assign(new Error("Error in Powershell script execution"), {
-        psError: err,
-        startScript
-      })
+      console.log('Error in Powershell script execution: ', err)
     })
 
-    this._psProc.stdout.on('data', data => this.emit('data', data))
+    const successCb = (...args) => this.emit(...args)
+    this._psProc.stdout.on('data', data => dataHandler(data, successCb))
   }
 
-  executeStartScript() {
+  start() {
+    if (this.isRunning) return
+    this.isRunning = true
     this._psProc.stdin.write(this.startScript)
   }
 
-  executeStopScript() {
+  stop() {
+    if (!this.isRunning) return
+    this.isRunning = false
     this._psProc.stdin.write(this.stopScript, () => {
       this.close()
       console.log('Stopped Powershell process for ' + this.startScript)
     })
   }
-  
+
   close() {
     this._psProc.stdin.end()
   }
