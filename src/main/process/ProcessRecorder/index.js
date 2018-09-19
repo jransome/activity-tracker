@@ -4,6 +4,7 @@ module.exports = class ProcessRecorder extends EventEmitter {
   constructor(processPoller, processListener, dbJobQueue, models) {
     super()
     this.pollProcesses = processPoller
+    this.listener = processListener
     this.models = models
     this.isRecording = false
     this.shuttingDown = false
@@ -21,6 +22,7 @@ module.exports = class ProcessRecorder extends EventEmitter {
       this.isRecording = true
       this._enqueueCheckDbClosedGracefully()
       this._enqueueSnapshot()
+      this.listener.start()
     }
   }
 

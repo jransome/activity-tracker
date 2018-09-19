@@ -5,7 +5,6 @@ timezones/BST/GMT?
 detect user idle time
 refactor/create ui logging class
 Error handling
-Not starting listeners on instantiation
 Stopping listeners
 Refactoring listeners/pollers
 Refactor out process polling dependency

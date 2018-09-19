@@ -21,7 +21,6 @@ const dataHandler = (data, successCb) => {
 
 try {
   processListener = new PowershellProcess(dataHandler, psArgs, registerEventsScript, unregisterEventsScript)
-  processListener.start() //tbd
 } catch (error) {
   console.log('processListener initialisation error', error) // TODO. throw again?
 }

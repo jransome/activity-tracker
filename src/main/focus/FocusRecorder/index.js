@@ -4,6 +4,7 @@ class FocusRecorder extends EventEmitter {
   constructor(focusPoller, focusListener, dbJobQueue, models) {
     super()
     this.getActiveWindow = focusPoller
+    this.listener = focusListener
     this.models = models
     this.isRecording = false
     this.shuttingDown = false
@@ -21,6 +22,7 @@ class FocusRecorder extends EventEmitter {
       this.isRecording = true
       this._enqueueCheckDbClosedGracefully()
       this._enqueueSnapshot()
+      this.listener.start()
     }
   }
 

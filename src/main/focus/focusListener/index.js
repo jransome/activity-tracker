@@ -30,7 +30,6 @@ const dataHandler = (data, successCb) => {
 
 try {
   focusListener = new PowershellProcess(dataHandler, psArgs, startMonitoringScript, stopMonitoringScript)
-  focusListener.start() // tbd
 } catch (error) {
   console.log('focusListener initialisation error', error) // TODO. throw again?
 }
