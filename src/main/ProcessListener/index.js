@@ -1,52 +1,45 @@
-const { spawn } = require('child_process')
 const { EventEmitter } = require('events')
 const path = require('path')
+const PowershellProcess = require('../PowershellProcess')
 
-module.exports = class ProcessListener extends EventEmitter {
+class ProcessListener extends EventEmitter {
   constructor() {
     super()
-    const encoding = 'utf8' // encoding for strings not buffers (as is default)
+    const args = ['-ExecutionPolicy', 'Unrestricted', '-NoLogo', '-NoExit', '-InputFormat', 'Text', '-Command', '-']
     const startEventIdentifier = 'startevent'
     const stopEventIdentifier = 'stopevent'
     const psScriptArgs = `-StartEventIdentifier ${startEventIdentifier} -StopEventIdentifier ${stopEventIdentifier}`
     const psScriptsDir = path.resolve(__dirname, '../../powershell/process')
     const registerEventsScript = `${psScriptsDir}/register-events.ps1 ${psScriptArgs}\n`
-    this._unregisterEventsScript = `${psScriptsDir}/unregister-events.ps1 ${psScriptArgs}\n`
+    const unregisterEventsScript = `${psScriptsDir}/unregister-events.ps1 ${psScriptArgs}\n`
 
-    const args = ['-ExecutionPolicy', 'Unrestricted', '-NoLogo', '-NoExit', '-InputFormat', 'Text', '-Command', '-']
-    this._psProc = spawn('powershell.exe', args)
-
-    if (!this._psProc.pid) throw new Error("Powershell child process did not start")
-
-    this._psProc.on('error', error => {
-      throw new Error("ERROR on Powershell child process: " + error)
-    })
-
-    this._psProc.stdin.setDefaultEncoding(encoding)
-    this._psProc.stdout.setEncoding(encoding)
-    this._psProc.stderr.setEncoding(encoding)
-
-    this._psProc.stdin.write(registerEventsScript, () => this.emit('Ready'))
-
-    this._psProc.stdout.on('data', (data) => {
-      try {
-        const event = JSON.parse(data)
-        event.timeStamp = new Date()
-        this.emit('listener-event', event)
-      } catch (error) {
-        // console.log('Non JSON PS output handled')
-      }
-    })
-
-    this._psProc.stderr.on('data', (data) => {
-      this.emit('powershell-error', data)
-    })
+    try {
+      this._psProc = new PowershellProcess(args, registerEventsScript, unregisterEventsScript)
+      this._psProc.on('data', data => this._handleData(data))
+      this.start()
+    } catch (error) {
+      console.log('process listener error', error) // TODO. throw again?
+    }
+  }
+  
+  start() {
+    this._psProc.executeStartScript()
   }
 
   stop() {
-    this._psProc.stdin.write(this._unregisterEventsScript, () => {
-      this._psProc.stdin.end()
-      console.log('Stopped listening')
-    })
+    this._psProc.executeStopScript()
+  }
+
+  _handleData(data) {
+    console.log('jkhdgaksjhsgfkjasfhg')
+    try {
+      const event = JSON.parse(data)
+      event.timeStamp = new Date()
+      this.emit('listener-event', event)
+    } catch (error) {
+      // console.log('Non JSON PS output handled')
+    }
   }
 }
+
+module.exports = ProcessListener
