@@ -33,6 +33,7 @@ class FocusRecorder extends EventEmitter {
         this.shuttingDown = true
         this.shutdownPromise = this._enqueueShutdown()
         await this.shutdownPromise
+        this.listener.stop()
         this.shuttingDown = false
         this.isRecording = false
         this.emit('stopped_recording')

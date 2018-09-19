@@ -21,10 +21,19 @@ async function startup() {
   models = await initDb(config)
   mainRecorder = new MainRecorder(models)
   mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
-  
+
   mainRecorder.on('focus-recorder-log', log => {
     if (mainWindow) mainWindow.webContents.send('log-update', log)
   })
+
+  // setTimeout(async () => {
+  //   console.log('STOPPING === '.repeat(50))
+  //   await mainRecorder.stopRecording()
+  //   setTimeout(() => {
+  //     console.log('STARTING AGAIN === '.repeat(50))
+  //     mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
+  //   }, 10000)
+  // }, 10000)
 }
 
 const createWindow = () => {
@@ -32,11 +41,11 @@ const createWindow = () => {
   mainWindow.loadFile('index.html')
 
   mainWindow.webContents.openDevTools()
-  
+
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
   })
-  
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })

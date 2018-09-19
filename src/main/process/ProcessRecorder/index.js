@@ -33,6 +33,7 @@ module.exports = class ProcessRecorder extends EventEmitter {
         this.shuttingDown = true
         this.shutdownPromise = this._triggerShutdown()
         await this.shutdownPromise
+        this.listener.stop()
         this.shuttingDown = false
         this.isRecording = false
         this.emit('stopped_recording')

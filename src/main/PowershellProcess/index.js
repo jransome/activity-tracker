@@ -4,11 +4,18 @@ const { EventEmitter } = require('events')
 class PowershellProcess extends EventEmitter {
   constructor(dataHandler, psArgs, startScript, stopScript) {
     super()
-
     this.isRunning = false
     this.startScript = startScript
     this.stopScript = stopScript
-    this._psProc = spawn('powershell.exe', psArgs)
+    this.spawn = () => spawn('powershell.exe', psArgs)
+    const successCb = (...args) => this.emit(...args)
+    this.dataHandler = data => dataHandler(data, successCb)
+  }
+
+  start() {
+    if (this.isRunning) return
+    this.isRunning = true
+    this._psProc = this.spawn()
 
     if (!this._psProc.pid) {
       throw Object.assign(new Error("Powershell child process did not start"), {
@@ -29,13 +36,8 @@ class PowershellProcess extends EventEmitter {
       console.log('Error in Powershell script execution: ', err)
     })
 
-    const successCb = (...args) => this.emit(...args)
-    this._psProc.stdout.on('data', data => dataHandler(data, successCb))
-  }
-
-  start() {
-    if (this.isRunning) return
-    this.isRunning = true
+    this._psProc.stdout.on('data', this.dataHandler)
+    
     this._psProc.stdin.write(this.startScript)
   }
 
