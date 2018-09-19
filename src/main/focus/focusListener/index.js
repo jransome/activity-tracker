@@ -1,5 +1,5 @@
 const path = require('path')
-const PowershellProcess = require('../../PowershellProcess')
+const Powershell = require('../../Powershell')
 
 let focusListener
 
@@ -29,7 +29,7 @@ const dataHandler = (data, successCb) => {
 }
 
 try {
-  focusListener = new PowershellProcess(dataHandler, psArgs, startMonitoringScript, stopMonitoringScript)
+  focusListener = new Powershell(dataHandler, psArgs, startMonitoringScript, stopMonitoringScript)
 } catch (error) {
   console.log('focusListener initialisation error', error) // TODO. throw again?
 }

@@ -1,5 +1,5 @@
 const path = require('path')
-const PowershellProcess = require('../../PowershellProcess')
+const Powershell = require('../../Powershell')
 
 let processListener
 
@@ -20,7 +20,7 @@ const dataHandler = (data, successCb) => {
 }
 
 try {
-  processListener = new PowershellProcess(dataHandler, psArgs, registerEventsScript, unregisterEventsScript)
+  processListener = new Powershell(dataHandler, psArgs, registerEventsScript, unregisterEventsScript)
 } catch (error) {
   console.log('processListener initialisation error', error) // TODO. throw again?
 }

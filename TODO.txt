@@ -1,11 +1,11 @@
 electron logs
-closing listener processes on shutdown?
 add start/stop recording controls to ui
+refactor/create ui logging class
+fix db package scripts
 minimise to system tray
+closing listener processes on shutdown?
 timezones/BST/GMT?
 detect user idle time
-refactor/create ui logging class
 Error handling
-Refactoring listeners/pollers
 Refactor out process polling dependency
 fix tests

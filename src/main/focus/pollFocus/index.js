@@ -1,5 +1,5 @@
 const path = require('path')
-const PowershellProcess = require('../../PowershellProcess')
+const Powershell = require('../../Powershell')
 
 module.exports = () => new Promise((resolve, reject) => {
   const psArgs = ['-ExecutionPolicy', 'Unrestricted']
@@ -18,7 +18,7 @@ module.exports = () => new Promise((resolve, reject) => {
   }
   
   try {
-    psProc = new PowershellProcess(dataHandler, psArgs, pollingScript)
+    psProc = new Powershell(dataHandler, psArgs, pollingScript)
     psProc.start()
   } catch (error) {
     console.log('focus poller error', error) // TODO.

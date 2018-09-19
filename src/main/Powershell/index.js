@@ -1,7 +1,7 @@
 const { spawn } = require('child_process')
 const { EventEmitter } = require('events')
 
-class PowershellProcess extends EventEmitter {
+class Powershell extends EventEmitter {
   constructor(dataHandler, psArgs, startScript, stopScript) {
     super()
     this.isRunning = false
@@ -62,4 +62,4 @@ class PowershellProcess extends EventEmitter {
   }
 }
 
-module.exports = PowershellProcess
+module.exports = Powershell
