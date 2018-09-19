@@ -1,5 +1,5 @@
-const FocusRecorder = require('../../src/FocusRecorder')
-const initDb = require('../../src/models')
+const FocusRecorder = require('../../src/main/FocusRecorder')
+const initDb = require('../../src/main/models')
 const purgeDb = require('../helpers/purgeDb')
 const MockListener = require('../helpers/mockListener')
 const queue = require('async/queue')

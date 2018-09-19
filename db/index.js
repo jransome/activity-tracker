@@ -3,7 +3,8 @@ const path = require('path')
 const Sequelize = require('sequelize')
 const Umzug = require('umzug')
 
-const runMigrations = async (sequelize, appDir) => {
+const runMigrations = async (sequelize) => {
+  const migrationsDir = `${__dirname}/migrations`
   const umzug = new Umzug({
     storage: 'sequelize',
     storageOptions: {
@@ -17,7 +18,7 @@ const runMigrations = async (sequelize, appDir) => {
           throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.')
         }
       ],
-      path: `${appDir}/migrations`,
+      path: migrationsDir,
       pattern: /\.js$/
     }
   })
@@ -29,34 +30,38 @@ const runMigrations = async (sequelize, appDir) => {
   }
 }
 
-const initDb = async (config, appDir) => {
+const setupModels = (db, sequelize) => {
   const basename = path.basename(__filename)
-  const db = {}
+  const modelsDir = `${__dirname}/models`
 
-  const { database, username, password } = config
-  const sequelize = new Sequelize(database, username, password, config)
-
-  await runMigrations(sequelize, appDir)
-
-  fs.readdirSync(__dirname)
+  fs.readdirSync(modelsDir)
     .filter(file => {
       return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js')
     })
     .forEach(file => {
-      const model = sequelize['import'](path.join(__dirname, file))
+      const model = sequelize['import'](path.join(modelsDir, file))
       db[model.name] = model
     })
 
   Object.keys(db).forEach(modelName => {
     if (db[modelName].associate) db[modelName].associate(db)
   })
+}
 
+const initDb = async (config) => {
+  const { database, username, password } = config
+  const sequelize = new Sequelize(database, username, password, config)
   await sequelize.query("PRAGMA journal_mode=WAL;") // use wal
+  
+  await runMigrations(sequelize)
+  
+  const dbInstance = {}
+  setupModels(dbInstance, sequelize)
 
-  db.sequelize = sequelize
-  db.Sequelize = Sequelize
+  dbInstance.sequelize = sequelize
+  dbInstance.Sequelize = Sequelize
 
-  return db
+  return dbInstance
 }
 
 module.exports = initDb

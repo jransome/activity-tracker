@@ -1,13 +1,17 @@
 const { spawn } = require('child_process')
 const { EventEmitter } = require('events')
+const path = require('path')
 
-class FocusListener extends EventEmitter {
-  constructor(appDir) {
+module.exports = class ProcessListener extends EventEmitter {
+  constructor() {
     super()
     const encoding = 'utf8' // encoding for strings not buffers (as is default)
-    const psScriptsDir = `${appDir}/src/powershell/focus`
-    const startMonitoringScript = `${psScriptsDir}/focus-monitor-start.ps1 \n`
-    this._stopMonitoringScript = `${psScriptsDir}/focus-monitor-stop.ps1 \n`
+    const startEventIdentifier = 'startevent'
+    const stopEventIdentifier = 'stopevent'
+    const psScriptArgs = `-StartEventIdentifier ${startEventIdentifier} -StopEventIdentifier ${stopEventIdentifier}`
+    const psScriptsDir = path.resolve(__dirname, '../../powershell/process')
+    const registerEventsScript = `${psScriptsDir}/register-events.ps1 ${psScriptArgs}\n`
+    this._unregisterEventsScript = `${psScriptsDir}/unregister-events.ps1 ${psScriptArgs}\n`
 
     const args = ['-ExecutionPolicy', 'Unrestricted', '-NoLogo', '-NoExit', '-InputFormat', 'Text', '-Command', '-']
     this._psProc = spawn('powershell.exe', args)
@@ -22,22 +26,15 @@ class FocusListener extends EventEmitter {
     this._psProc.stdout.setEncoding(encoding)
     this._psProc.stderr.setEncoding(encoding)
 
-    this._psProc.stdin.write(startMonitoringScript, () => this.emit('ready'))
+    this._psProc.stdin.write(registerEventsScript, () => this.emit('Ready'))
 
     this._psProc.stdout.on('data', (data) => {
       try {
-        const output = data.split('_FOCUS_CHANGE_') // TODO: refactor
-        if (this._validate(output)) {
-          const event = {
-            pid: parseInt(output[0]),
-            path: output[1].trim(),
-            exeName: output[1].trim().split("\\").slice(-1)[0],
-            timestamp: new Date()
-          }
-          this.emit('listener-event', event)
-        } 
+        const event = JSON.parse(data)
+        event.timeStamp = new Date()
+        this.emit('listener-event', event)
       } catch (error) {
-        console.log(error)
+        // console.log('Non JSON PS output handled')
       }
     })
 
@@ -47,15 +44,9 @@ class FocusListener extends EventEmitter {
   }
 
   stop() {
-    this._psProc.stdin.write(this._stopMonitoringScript, () => {
+    this._psProc.stdin.write(this._unregisterEventsScript, () => {
       this._psProc.stdin.end()
       console.log('Stopped listening')
     })
   }
-
-  _validate(event) {
-    return (event.length === 2)
-  }
 }
-
-module.exports = FocusListener

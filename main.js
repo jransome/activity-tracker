@@ -1,11 +1,11 @@
 const { app, BrowserWindow } = require('electron')
 const config = require('./config')
-const initDb = require('./src/models')
-const { MainRecorder, RECORDING_MODES } = require('./src/MainRecorder')
-const exportSpreadsheet = require('./src/exportSpreadsheet')
+const initDb = require('./db')
+const { MainRecorder, RECORDING_MODES } = require('./src/main/MainRecorder')
+const exportSpreadsheet = require('./src/main/exportSpreadsheet')
 
 const { userDocumentsPath } = config
-let dbConnection
+let models
 let mainRecorder
 let mainWindow
 
@@ -18,9 +18,8 @@ const instanceAlreadyRunning = app.makeSingleInstance(() => {
 if (instanceAlreadyRunning) app.quit()
 
 async function startup() {
-  const appDir = app.getAppPath()
-  dbConnection = await initDb(config, appDir)
-  mainRecorder = new MainRecorder(dbConnection, appDir)
+  models = await initDb(config)
+  mainRecorder = new MainRecorder(models)
   mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
   
   mainRecorder.on('focus-recorder-log', log => {
@@ -55,7 +54,7 @@ app.on('ready', () => {
 app.on('window-all-closed', async () => {
   await mainRecorder.stopRecording()
   try {
-    await exportSpreadsheet(dbConnection, userDocumentsPath)
+    await exportSpreadsheet(models, userDocumentsPath)
   } catch (error) {
     console.log('Exporting spreadsheet error: ' + error)
   }

@@ -1,10 +1,10 @@
 const { EventEmitter } = require('events')
 
 class FocusRecorder extends EventEmitter {
-  constructor(focusPoller, focusListener, dbJobQueue, dbConnection) {
+  constructor(focusPoller, focusListener, dbJobQueue, models) {
     super()
     this.getActiveWindow = focusPoller
-    this.dbConnection = dbConnection
+    this.models = models
     this.isRecording = false
     this.shuttingDown = false
     this.shutdownPromise = null
@@ -84,7 +84,7 @@ class FocusRecorder extends EventEmitter {
   }
 
   async _saveNewFocus({ pid, path, exeName, timestamp }) {
-    const { Program, FocusSession } = this.dbConnection
+    const { Program, FocusSession } = this.models
     const [program] = await Program.findCreateFind({ where: { exeName: exeName } })
     const newActiveSession = {
       pid,
@@ -108,7 +108,7 @@ class FocusRecorder extends EventEmitter {
 
     if (activeFocusSessions.length > 0) {
       console.log('WARNING: focus tracker was not shutdown properly. Removing unfinished sessions...')
-      this.dbConnection.FocusSession.destroy({ where: { isActive: true } })
+      this.models.FocusSession.destroy({ where: { isActive: true } })
     }
   }
 
@@ -129,7 +129,7 @@ class FocusRecorder extends EventEmitter {
   }
 
   async _getActiveSessions() {
-    return await this.dbConnection.FocusSession.findAll({ where: { isActive: true } })
+    return await this.models.FocusSession.findAll({ where: { isActive: true } })
   }
 }
 

@@ -5,7 +5,7 @@ const pollProcesses = require('../pollProcesses')
 const ProcessListener = require('../ProcessListener')
 const ProcessRecorder = require('../ProcessRecorder')
 
-const focusPoller = require('../pollFocus')
+const pollFocus = require('../pollFocus')
 const FocusListener = require('../FocusListener')
 const FocusRecorder = require('../FocusRecorder')
 
@@ -19,17 +19,16 @@ const RECORDING_MODES = {
 }
 
 class MainRecorder extends EventEmitter {
-  constructor(dbConnection, appDir) {
+  constructor(models) {
     super()
     const dbJobQueue = queue(async task => await task())
 
-    const pollFocus = focusPoller(appDir)
-    this.focusListener = new FocusListener(appDir)
-    this[FOCUS_RECORDER] = new FocusRecorder(pollFocus, this.focusListener, dbJobQueue, dbConnection)
+    this.focusListener = new FocusListener()
+    this[FOCUS_RECORDER] = new FocusRecorder(pollFocus, this.focusListener, dbJobQueue, models)
     this[FOCUS_RECORDER].on('log', log => this.emit('focus-recorder-log', log))
 
-    this.processListener = new ProcessListener(appDir)
-    this[PROCESS_RECORDER] = new ProcessRecorder(pollProcesses, this.processListener, dbJobQueue, dbConnection)
+    this.processListener = new ProcessListener()
+    this[PROCESS_RECORDER] = new ProcessRecorder(pollProcesses, this.processListener, dbJobQueue, models)
   }
 
   startRecording(mode) {

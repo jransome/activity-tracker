@@ -1,10 +1,10 @@
 const { EventEmitter } = require('events')
 
 module.exports = class ProcessRecorder extends EventEmitter {
-  constructor(processPoller, processListener, dbJobQueue, dbConnection) {
+  constructor(processPoller, processListener, dbJobQueue, models) {
     super()
     this.pollProcesses = processPoller
-    this.dbConnection = dbConnection
+    this.models = models
     this.isRecording = false
     this.shuttingDown = false
     this.shutdownPromise = null
@@ -54,7 +54,7 @@ module.exports = class ProcessRecorder extends EventEmitter {
   }
 
   async _traceRecorder({ type, pid, exeName, timeStamp }) {
-    const { Program, ProgramSession, ProcessSession } = this.dbConnection
+    const { Program, ProgramSession, ProcessSession } = this.models
 
     if (type === "startTrace") {
       console.log('start trace detected for:', exeName)
@@ -124,7 +124,7 @@ module.exports = class ProcessRecorder extends EventEmitter {
   }
 
   async _recordSnapshot({snapshot, timestamp}) {
-    const { Program, ProgramSession, ProcessSession } = this.dbConnection
+    const { Program, ProgramSession, ProcessSession } = this.models
     for (const snapshottedProcess of snapshot) {
       const [program] = await Program.findCreateFind({
         where: { exeName: snapshottedProcess.name }
@@ -160,7 +160,7 @@ module.exports = class ProcessRecorder extends EventEmitter {
     // TODO
     // look at: sequelize logging/sqlite last modified, powershell shutdown timestamp
 
-    // const lastSnapshot = await this.dbConnection.Snapshot.findOne({ order: [['createdAt', 'DESC']], raw: true })
+    // const lastSnapshot = await this.models.Snapshot.findOne({ order: [['createdAt', 'DESC']], raw: true })
 
     // if (lastSnapshot) {
     //   const lastSnapshotTime = new Date(lastSnapshot.takenAt)
@@ -181,12 +181,12 @@ module.exports = class ProcessRecorder extends EventEmitter {
   }
 
   async _closeAllSessions(shutdownDate = new Date()) {
-    await this.dbConnection.ProcessSession.update({ isActive: false, endTime: shutdownDate }, { where: { isActive: true } })
+    await this.models.ProcessSession.update({ isActive: false, endTime: shutdownDate }, { where: { isActive: true } })
     await this._closeAllProgramSessions(shutdownDate)
   }
 
   async _closeAllProgramSessions(shutdownDate) {
-    const activePrograms = await this.dbConnection.ProgramSession.findAll({ where: { isActive: true } })
+    const activePrograms = await this.models.ProgramSession.findAll({ where: { isActive: true } })
     for (const programSession of activePrograms) {
       const duration = shutdownDate - programSession.startTime
       await programSession.update({ isActive: false, endTime: shutdownDate, duration })

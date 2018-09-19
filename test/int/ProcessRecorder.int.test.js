@@ -1,5 +1,5 @@
-const ProcessRecorder = require('../../src/ProcessRecorder')
-const initDb = require('../../src/models')
+const ProcessRecorder = require('../../src/main/ProcessRecorder')
+const initDb = require('../../src/main/models')
 const purgeDb = require('../helpers/purgeDb')
 const mockProcessFactory = require('../helpers/mockProcess')
 const MockListener = require('../helpers/mockListener')
