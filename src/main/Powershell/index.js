@@ -1,32 +1,29 @@
 const { spawn } = require('child_process')
-const { EventEmitter } = require('events')
 
-class Powershell extends EventEmitter {
-  constructor(dataHandler, psArgs, startScript, stopScript) {
-    super()
-    this.isRunning = false
-    this.startScript = startScript
-    this.stopScript = stopScript
-    this.spawn = () => spawn('powershell.exe', psArgs)
-    const successCb = (...args) => this.emit(...args)
-    this.dataHandler = data => dataHandler(data, successCb)
+class Powershell {
+  constructor(psArgs, startScript, stopScript, dataHandler) {
+    this._isRunning = false
+    this._startScript = startScript
+    this._stopScript = stopScript
+    this._dataHandler = dataHandler
+    this._spawn = () => spawn('powershell.exe', psArgs)
   }
 
   start() {
-    if (this.isRunning) return
-    this.isRunning = true
-    this._psProc = this.spawn()
+    if (this._isRunning) return
+    this._isRunning = true
+    this._psProc = this._spawn()
 
     if (!this._psProc.pid) {
-      throw Object.assign(new Error("Powershell child process did not start"), {
-        startScript
+      throw Object.assign(new Error('Powershell child process did not start'), {
+        script: startScript
       })
     }
 
     this._psProc.on('error', err => {
-      throw Object.assign(new Error("Error on Powershell child process"), {
+      throw Object.assign(new Error('Error on Powershell child process'), {
         psError: err,
-        startScript
+        script: startScript
       })
     })
 
@@ -36,22 +33,17 @@ class Powershell extends EventEmitter {
       console.log('Error in Powershell script execution: ', err)
     })
 
-    this._psProc.stdout.on('data', this.dataHandler)
+    this._psProc.stdout.on('data', data => this._dataHandler(data))
     
-    this._psProc.stdin.write(this.startScript)
+    this._psProc.stdin.write(this._startScript)
   }
 
   stop() {
-    if (!this.isRunning) return
-    this.isRunning = false
-    this._psProc.stdin.write(this.stopScript, () => {
-      this.close()
-      console.log('Stopped Powershell process for ' + this.startScript)
+    if (!this._isRunning) return
+    this._isRunning = false
+    this._psProc.stdin.end(this._stopScript ? this._stopScript : null, () => {
+      console.log('Stopped Powershell process for ' + this._startScript)
     })
-  }
-
-  close() {
-    this._psProc.stdin.end()
   }
 
   _setEncoding() {
