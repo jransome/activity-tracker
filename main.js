@@ -1,12 +1,13 @@
 const { app, BrowserWindow } = require('electron')
 const config = require('./config')
 const initDb = require('./db')
-const { MainRecorder, RECORDING_MODES } = require('./src/main/MainRecorder')
+const focusRecorderFactory = require('./src/main/focus')
+
 const exportSpreadsheet = require('./src/main/exportSpreadsheet')
 
 const { userDocumentsPath } = config
 let models
-let mainRecorder
+let focusRecorder
 let mainWindow
 
 const instanceAlreadyRunning = app.makeSingleInstance(() => {
@@ -19,21 +20,12 @@ if (instanceAlreadyRunning) app.quit()
 
 async function startup() {
   models = await initDb(config)
-  mainRecorder = new MainRecorder(models)
-  mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
-
-  mainRecorder.on('focus-recorder-log', log => {
+  focusRecorder = focusRecorderFactory(models)
+  focusRecorder.startRecording()
+  focusRecorder.on('log', log => {
+    console.log('log', log)
     if (mainWindow) mainWindow.webContents.send('log-update', log)
   })
-
-  // setTimeout(async () => {
-  //   console.log('STOPPING === '.repeat(50))
-  //   await mainRecorder.stopRecording()
-  //   setTimeout(() => {
-  //     console.log('STARTING AGAIN === '.repeat(50))
-  //     mainRecorder.startRecording(RECORDING_MODES.FOCUS_ONLY)
-  //   }, 10000)
-  // }, 10000)
 }
 
 const createWindow = () => {
@@ -61,7 +53,7 @@ app.on('ready', () => {
 })
 
 app.on('window-all-closed', async () => {
-  await mainRecorder.stopRecording()
+  await focusRecorder.stopRecording()
   try {
     await exportSpreadsheet(models, userDocumentsPath)
   } catch (error) {

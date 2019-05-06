@@ -1,37 +1,38 @@
 const path = require('path')
+const { EventEmitter } = require('events')
 const Powershell = require('../../Powershell')
-
-let focusListener
 
 const psArgs = ['-ExecutionPolicy', 'Unrestricted', '-NoLogo', '-NoExit', '-InputFormat', 'Text', '-Command', '-']
 const startMonitoringScript = `${path.resolve(__dirname, './focus-monitor-start.ps1')} \n`
 const stopMonitoringScript = `${path.resolve(__dirname, './focus-monitor-stop.ps1')} \n`
 
-const parseData = data => {
+const parseData = (data) => {
   const parsed = data.split('_FOCUS_CHANGE_')
   if (parsed.length === 2) return parsed
 }
 
-const dataHandler = (data, successCb) => {
-  try {
+const focusListenerFactory = () => {
+  const focusListener = new EventEmitter()
+  
+  const dataHandler = (data) => {
     const parsedData = parseData(data)
     if (parsedData) {
-      successCb('listener-event', {
+      focusListener.emit('data' ,{
         pid: parseInt(parsedData[0]),
         path: parsedData[1].trim(),
         exeName: parsedData[1].trim().split("\\").slice(-1)[0],
         timestamp: new Date()
       })
     }
-  } catch (error) {
-    console.log('Error on parsing focus listener event: ', error)
   }
+
+  try {
+    new Powershell(psArgs, startMonitoringScript, stopMonitoringScript, dataHandler)
+  } catch (error) {
+    console.error('Focus Listener powershell initialisation error', error) 
+  }
+
+  return focusListener
 }
 
-try {
-  focusListener = new Powershell(dataHandler, psArgs, startMonitoringScript, stopMonitoringScript)
-} catch (error) {
-  console.log('focusListener initialisation error', error) // TODO. throw again?
-}
-
-module.exports = focusListener
+module.exports = focusListenerFactory
