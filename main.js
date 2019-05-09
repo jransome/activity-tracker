@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron')
 const config = require('./config')
-const initDb = require('./db')
+const initDb = require('./database')
 const focusRecorderFactory = require('./src/main/focus')
 
 const exportSpreadsheet = require('./src/main/exportSpreadsheet')

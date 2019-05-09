@@ -21,7 +21,7 @@
     "dist": "electron-builder",
     "postinstall": "install-app-deps",
     "db:clean": "node_modules/.bin/sequelize db:migrate:undo:all && npm run db:migrate",
-    "db:destroy": "rm db/*.sqlite3*",
+    "db:destroy": "rm directory-stubs/userData/*.sqlite3*",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
     "test": "set NODE_ENV=test && npm run db:clean && jest --runInBand"
   },
