@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron')
 const config = require('./config')
-const initDb = require('./database')
+const connectToDb = require('./database')
 const focusRecorderFactory = require('./src/main/focus')
 
 const exportSpreadsheet = require('./src/main/exportSpreadsheet')
@@ -19,7 +19,7 @@ const instanceAlreadyRunning = app.makeSingleInstance(() => {
 if (instanceAlreadyRunning) app.quit()
 
 async function startup() {
-  models = await initDb(config)
+  models = await connectToDb(config)
   focusRecorder = focusRecorderFactory(models)
   focusRecorder.startRecording()
   focusRecorder.on('log', log => {

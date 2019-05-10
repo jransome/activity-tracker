@@ -5,7 +5,7 @@ const config = {
   development: {
     username: "root",
     password: null,
-    database: "database_development",
+    name: "database_development",
     storage: "./directory-stubs/userData/db_dev.sqlite3",
     dialect: "sqlite",
     operatorsAliases: false,
@@ -15,7 +15,7 @@ const config = {
   test: {
     username: "root",
     password: null,
-    database: "database_test",
+    name: "database_test",
     storage: "./directory-stubs/userData/db_test.sqlite3",
     dialect: "sqlite",
     operatorsAliases: false,
@@ -25,7 +25,7 @@ const config = {
   production: {
     username: "root",
     password: null,
-    database: "database_production",
+    name: "database_production",
     storage: `${app.getPath('userData')}/db.sqlite3`,
     dialect: "sqlite",
     operatorsAliases: false,
