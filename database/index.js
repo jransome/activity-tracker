@@ -1,67 +1,41 @@
 const fs = require('fs')
-const path = require('path')
 const Sequelize = require('sequelize')
-const Umzug = require('umzug')
+const runMigrations = require('./migrate')
+const importModels = require('./models')
 
-const runMigrations = async (sequelize) => {
-  const migrationsDir = `${__dirname}/migrations`
-  const umzug = new Umzug({
-    storage: 'sequelize',
-    storageOptions: {
-      sequelize,
-    },
-    migrations: {
-      params: [
-        sequelize.getQueryInterface(),
-        sequelize.constructor,
-        function () {
-          throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.')
-        }
-      ],
-      path: migrationsDir,
-      pattern: /\.js$/
+module.exports = async (config) => {
+  const { name, username, password, storage } = config
+  const dbIsPreExisting = fs.existsSync(storage)
+  const sequelize = new Sequelize(name, username, password, config)
+
+  if (!dbIsPreExisting) {
+    console.log('No pre-existing db was detected, new db created.')
+    try {
+      // use Write-Ahead Logging for speed benefits
+      await sequelize.query("PRAGMA journal_mode=WAL;")
+    } catch (error) {
+      console.error('Error setting WAL:', error)
     }
-  })
-  try {
-    await umzug.up()
-    console.log('Migration complete!')
-  } catch (error) {
-    console.log('Error on db migration: ', error)
+  
+    try {
+      console.log('Running migrations...')
+      await runMigrations(sequelize)
+    } catch (error) {
+      console.error('Error on database migration check:', error)
+    }
   }
-}
 
-const setupModels = (db, sequelize) => {
-  const basename = path.basename(__filename)
-  const modelsDir = `${__dirname}/models`
+  let models
+  try {
+    models = importModels(sequelize)
+  } catch (error) {
+    console.error('Database models import error:', error)
+  }
 
-  fs.readdirSync(modelsDir)
-    .filter(file => {
-      return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js')
-    })
-    .forEach(file => {
-      const model = sequelize['import'](path.join(modelsDir, file))
-      db[model.name] = model
-    })
-
-  Object.keys(db).forEach(modelName => {
-    if (db[modelName].associate) db[modelName].associate(db)
-  })
-}
-
-const initDb = async (config) => {
-  const { database, username, password } = config
-  const sequelize = new Sequelize(database, username, password, config)
-  await sequelize.query("PRAGMA journal_mode=WAL;") // use wal
-  
-  await runMigrations(sequelize)
-  
-  const dbInstance = {}
-  setupModels(dbInstance, sequelize)
-
-  dbInstance.sequelize = sequelize
-  dbInstance.Sequelize = Sequelize
-
+  const dbInstance = {
+    ...models,
+    sequelize,
+    Sequelize
+  }
   return dbInstance
 }
-
-module.exports = initDb
