@@ -29,12 +29,10 @@ class Powershell {
 
     this._setEncoding()
 
-    this._psProc.stderr.on('data', (err) => {
-      console.log('Error in Powershell script execution: ', err)
-    })
+    this._psProc.stderr.on('data', err => console.error('Error in Powershell script execution: ', err))
 
     this._psProc.stdout.on('data', data => this._dataHandler(data))
-    
+
     this._psProc.stdin.write(this._startScript)
   }
 
