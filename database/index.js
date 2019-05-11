@@ -32,10 +32,5 @@ module.exports = async (config) => {
     console.error('Database models import error:', error)
   }
 
-  const dbInstance = {
-    ...models,
-    sequelize,
-    Sequelize
-  }
-  return dbInstance
+  return models
 }
