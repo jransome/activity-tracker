@@ -12,7 +12,7 @@ class FocusRecorder extends EventEmitter {
     this.activeSessionCache = null
     this.jobQueue = dbJobQueue
 
-    focusListener.on('listener-event', (focusChangeEvent) => {
+    focusListener.on('data', (focusChangeEvent) => {
       if (this.isRecording && !this.shuttingDown) this._enqueueFocusUpdate(focusChangeEvent)
     })
   }
@@ -22,7 +22,7 @@ class FocusRecorder extends EventEmitter {
       this.isRecording = true
       this._enqueueCheckDbClosedGracefully()
       this._enqueueSnapshot()
-      this.listener.start()
+      // this.listener.start()
     }
   }
 
@@ -33,7 +33,7 @@ class FocusRecorder extends EventEmitter {
         this.shuttingDown = true
         this.shutdownPromise = this._enqueueShutdown()
         await this.shutdownPromise
-        this.listener.stop()
+        // this.listener.stop()
         this.shuttingDown = false
         this.isRecording = false
         this.emit('stopped_recording')

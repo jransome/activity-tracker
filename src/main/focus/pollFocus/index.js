@@ -2,6 +2,7 @@ const path = require('path')
 const Powershell = require('../../Powershell')
 
 module.exports = () => new Promise((resolve, reject) => {
+  let psProc
   const psArgs = ['-ExecutionPolicy', 'Unrestricted']
   const pollingScript = `${path.resolve(__dirname, './get-current-focus.ps1')} \n`
 
@@ -13,7 +14,7 @@ module.exports = () => new Promise((resolve, reject) => {
       psProc.stop()
       resolve(event)
     } catch (error) {
-      console.debug('Non JSON PS output handled in poll focus')
+      console.warn('Non JSON PS output handled in poll focus')
     }
   }
   

@@ -8,7 +8,7 @@ const stopMonitoringScript = `${path.resolve(__dirname, './focus-monitor-stop.ps
 
 const parseData = (data) => {
   const parsed = data.split('_FOCUS_CHANGE_')
-  if (parsed.length === 2) return parsed
+  return parsed.length === 2 ? parsed : null
 }
 
 const focusListenerFactory = () => {
@@ -27,7 +27,7 @@ const focusListenerFactory = () => {
   }
 
   try {
-    new Powershell(psArgs, startMonitoringScript, stopMonitoringScript, dataHandler)
+    new Powershell(psArgs, startMonitoringScript, stopMonitoringScript, dataHandler).start()
   } catch (error) {
     console.error('Focus Listener powershell initialisation error', error) 
   }
