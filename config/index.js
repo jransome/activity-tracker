@@ -40,5 +40,6 @@ const getConfig = () => {
 }
 
 const exportedConfig = getConfig()
-console.log('exportedConfig', exportedConfig)
+console.log('Using config:', exportedConfig)
+
 module.exports = exportedConfig
