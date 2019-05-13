@@ -32,5 +32,9 @@ module.exports = async (config) => {
     console.error('Database models import error:', error)
   }
 
-  return models
+  return {
+    ...models,
+    sequelize,
+    Sequelize,
+  }
 }

@@ -11,10 +11,10 @@ module.exports = () => new Promise((resolve, reject) => {
       const event = JSON.parse(data)
       event.exeName = event.path.trim().split("/").slice(-1)[0]
       event.timestamp = new Date()
-      psProc.stop()
+      psProc.end()
       resolve(event)
     } catch (error) {
-      console.warn('Non JSON PS output handled in poll focus')
+      console.warn('[POLL] Non JSON PS output handled in poll focus')
     }
   }
   
@@ -22,7 +22,7 @@ module.exports = () => new Promise((resolve, reject) => {
     psProc = new Powershell(psArgs, pollingScript, null, dataHandler)
     psProc.start()
   } catch (error) {
-    console.error('focus poller error', error)
+    console.error('[POLL] focus poller error', error)
     reject(error)
   }
 })

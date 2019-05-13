@@ -1,9 +1,9 @@
-const queue = require('async/queue')
+const pollFocus = require('./poll')
+const listenerFactory = require('./listener')
+const recorder = require('./recorder')
 
-const pollFocus = require('./pollFocus')
-const createFocusListener = require('./focusListener')
-const FocusRecorder = require('./FocusRecorder')
-
-const dbJobQueue = queue(async task => await task())
-
-module.exports = (dbModels) => new FocusRecorder(pollFocus, createFocusListener(), dbJobQueue, dbModels)
+module.exports = (dbConnection) => {
+    recorder.saveInitialFocus(dbConnection, pollFocus)
+    const stopRecording = recorder.startRecorder(dbConnection, listenerFactory())
+    return { stopRecording }
+}

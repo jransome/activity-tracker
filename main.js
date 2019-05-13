@@ -1,12 +1,12 @@
 const { app, BrowserWindow } = require('electron')
 const config = require('./config')
 const connectToDb = require('./database')
-const focusRecorderFactory = require('./src/main/focus')
+const startRecording = require('./src/main/focus')
 
 const exportSpreadsheet = require('./src/main/exportSpreadsheet')
 
 const { userDocumentsPath } = config
-let models
+let database
 let focusRecorder
 let mainWindow
 
@@ -19,13 +19,8 @@ const instanceAlreadyRunning = app.makeSingleInstance(() => {
 if (instanceAlreadyRunning) app.quit()
 
 async function startup() {
-  models = await connectToDb(config)
-  focusRecorder = focusRecorderFactory(models)
-  focusRecorder.startRecording()
-  focusRecorder.on('log', log => {
-    console.log('log', log)
-    if (mainWindow) mainWindow.webContents.send('log-update', log)
-  })
+  database = await connectToDb(config)
+  focusRecorder = startRecording(database)
 }
 
 const createWindow = () => {
@@ -55,7 +50,7 @@ app.on('ready', () => {
 app.on('window-all-closed', async () => {
   await focusRecorder.stopRecording()
   try {
-    await exportSpreadsheet(models, userDocumentsPath)
+    await exportSpreadsheet(database, userDocumentsPath)
   } catch (error) {
     console.log('Exporting spreadsheet error: ' + error)
   }
