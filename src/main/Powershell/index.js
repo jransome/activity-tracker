@@ -1,4 +1,5 @@
 const { spawn } = require('child_process')
+const logger = require('../../logger')('[POWERSHELL]')
 
 class Powershell {
   constructor(psArgs, startScript, stopScript, dataHandler) {
@@ -29,18 +30,27 @@ class Powershell {
 
     this._setEncoding()
 
-    this._psProc.stderr.on('data', err => console.error('Error in Powershell script execution: ', err))
+    this._psProc.stderr.on('data', err => logger.error('Error in Powershell script execution: ', err))
 
     this._psProc.stdout.on('data', data => this._dataHandler(data))
 
     this._psProc.stdin.write(this._startScript)
   }
 
-  stop() {
+  async end() {
     if (!this._isRunning) return
     this._isRunning = false
-    this._psProc.stdin.end(this._stopScript ? this._stopScript : null, () => {
-      console.log('Stopped Powershell process for ' + this._startScript)
+    if (this._stopScript) await this._runStopScript()
+    this._psProc.kill('SIGTERM')
+    logger.info('Killed Powershell child process for ' + this._startScript.trim())
+  }
+
+  _runStopScript() {
+    return new Promise(resolve => {
+      this._psProc.stdin.end(this._stopScript, () => {
+        logger.info('Invoked Powershell stop script for ' + this._startScript.trim())
+        resolve()
+      })
     })
   }
 

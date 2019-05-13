@@ -27,11 +27,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "async": "^2.6.1",
     "devtron": "^1.4.0",
     "electron-is-dev": "^0.3.0",
     "node-excel-export": "^1.4.4",
-    "process-list": "^1.2.3",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
     "sqlite3": "^4.0.1",

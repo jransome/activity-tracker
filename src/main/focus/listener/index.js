@@ -26,13 +26,15 @@ const focusListenerFactory = () => {
     }
   }
 
+  let psProc
   try {
-    new Powershell(psArgs, startMonitoringScript, stopMonitoringScript, dataHandler).start()
+    psProc = new Powershell(psArgs, startMonitoringScript, stopMonitoringScript, dataHandler)
+    psProc.start()
   } catch (error) {
     console.error('Focus Listener powershell initialisation error', error) 
   }
 
-  return focusListener
+  return { listener: focusListener, end: psProc.end }
 }
 
 module.exports = focusListenerFactory
