@@ -1,45 +1,52 @@
-const FocusRecorder = require('../../src/main/FocusRecorder')
-const initDb = require('../../src/main/models')
+const { EventEmitter } = require('events')
 const databaseHelpers = require('../helpers/database')
-const MockListener = require('../helpers/mockListener')
-const queue = require('async/queue')
+const config = require('../../config')
+const initDb = require('../../database')
+const queueFactory = require('../../src/main/queue')
+const recorderFactory = require('../../src/main/focus/recorder')
 
 describe('recording focus', () => {
-  let db;
-  let recorder;
+  let dbConnection;
   let mockPoller;
   let mockListener;
 
+  const mockPolled = {
+    path: 'C:/folder/program.exe',
+    pid: 1,
+    exeName: 'program.exe',
+    timestamp: new Date(),
+  }
+
   beforeEach(async () => {
+    console.log('destroying test db...')
     databaseHelpers.destroy()
-    db = await initDb()
+    console.log('reinitialising test db...')
+    dbConnection = await initDb(config)
     mockPoller = jest.fn()
-    mockListener = new MockListener()
-    const dbJobQueue = queue(async (task) => {
-      await task()
-    })
-    recorder = new FocusRecorder(mockPoller, mockListener, dbJobQueue, db)
-    await purgeDb(db)
+    mockListener = {
+      listener: new EventEmitter(),
+      end: jest.fn(),
+    }
   })
 
   describe('saving initial snapshot', () => {
     it('records the program that currently has focus', async () => {
-      const activeFocus = { pid: 1, exeName: 'a.exe', timestamp: new Date('1990') }
-      mockPoller.mockResolvedValue(activeFocus)
+      let enqueueFunction
+      const internalQueueDrained = new Promise(res => {
+        enqueueFunction = queueFactory(() => res())
+      })
+      const recorder = recorderFactory(enqueueFunction)
+      mockPoller.mockResolvedValue(mockPolled)
 
-      await recorder._enqueueSnapshot()
+      recorder.saveInitialFocus(dbConnection, mockPoller)
+      await internalQueueDrained
 
-      const { programs, focusSessions } = await getAllfromDb()
-      expect.assertions(9)
-      expect(focusSessions).toHaveLength(1)
-      expect(focusSessions[0].pid).toEqual(activeFocus.pid)
-      expect(focusSessions[0].exeName).toEqual(activeFocus.exeName)
-      expect(focusSessions[0].startTime).toEqual(activeFocus.timestamp)
-      expect(focusSessions[0].isActive).toBeTruthy()
-      expect(focusSessions[0].ProgramId).toEqual(programs[0].id)
-      expect(programs).toHaveLength(1)
-      expect(programs[0].exeName).toEqual(activeFocus.exeName)
-      expect(programs[0].focusTime).toBeNull()
+      const { focusSessions, programs } = await databaseHelpers.getAllModels(dbConnection)
+      expect(focusSessions.length).toEqual(1)
+      expect(focusSessions[0].exeName).toEqual(mockPolled.exeName)
+      expect(programs.length).toEqual(1)
+      expect(programs[0].exeName).toEqual(mockPolled.exeName)
+      expect(programs[0]).toEqual(await focusSessions[0].getProgram())
     })
   })
 })
