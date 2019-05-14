@@ -2,6 +2,10 @@ const path = require('path')
 const logger = require('../../../logger')('[POLL]')
 const Powershell = require('../../Powershell')
 
+const POLL_TIMEOUT_MS = 10000
+
+const pollTimeout = new Promise((resolve, reject) => setTimeout(() => reject(`Poll timed out after ${POLL_TIMEOUT_MS}ms`), POLL_TIMEOUT_MS))
+
 const tryJsonParse = (data) => {
   let json = null
   try {
@@ -12,7 +16,7 @@ const tryJsonParse = (data) => {
   return json
 }
 
-module.exports = () => new Promise((resolve, reject) => {
+module.exports = () => Promise.race([pollTimeout, new Promise((resolve, reject) => {
   let psProc
   const psArgs = ['-ExecutionPolicy', 'Unrestricted']
   const pollingScript = `${path.resolve(__dirname, './get-current-focus.ps1')} \n`
@@ -22,6 +26,7 @@ module.exports = () => new Promise((resolve, reject) => {
       const event = tryJsonParse(data)
       event.exeName = event.path.trim().split('/').slice(-1)[0]
       event.timestamp = new Date()
+      logger.debug('Found current focus')
       await psProc.end()
       logger.debug('Ended powershell child process')
       resolve(event)
@@ -38,4 +43,4 @@ module.exports = () => new Promise((resolve, reject) => {
     logger.error('Focus poller error:', error)
     reject(error)
   }
-})
+})])

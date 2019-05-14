@@ -58,7 +58,7 @@ module.exports = (enqueue) => {
     try {
       logger.info('Polling for current focus...')
       activeFocus = await pollFocus()
-      return enqueue(newFocusTransaction(activeFocus, database, 0))
+      return enqueue(newFocusTransaction(activeFocus, database, 0)).then(() => logger.info('Initial focus saved'))
     } catch (error) {
       logger.error('Unable to record initial focus:', error)
     }
