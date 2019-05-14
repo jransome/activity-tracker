@@ -1,6 +1,7 @@
-const pollFocus = require('./poll')
+const queueFactory = require('../queue')
 const listenerFactory = require('./listener')
-const recorder = require('./recorder')
+const pollFocus = require('./poll')
+const recorder = require('./recorder')(queueFactory())
 
 module.exports = (dbConnection) => {
     recorder.saveInitialFocus(dbConnection, pollFocus)

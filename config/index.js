@@ -22,20 +22,20 @@ const config = {
     logging: false,
     userDocumentsPath: "./directory-stubs/documents",
   },
-  production: {
-    username: "root",
-    password: null,
-    name: "database_production",
-    storage: `${app.getPath('userData')}/db.sqlite3`,
-    dialect: "sqlite",
-    operatorsAliases: false,
-    logging: false,
-    userDocumentsPath: app.getPath('documents'),
-  }
+  // production: {
+  //   username: "root",
+  //   password: null,
+  //   name: "database_production",
+  //   storage: `${app.getPath('userData')}/db.sqlite3`,
+  //   dialect: "sqlite",
+  //   operatorsAliases: false,
+  //   logging: false,
+  //   userDocumentsPath: app.getPath('documents'),
+  // }
 }
 
 const getConfig = () => {
-  if (!isDev) return config.production
+  // if (!isDev) return config.production
   return config[process.env.NODE_ENV.trim()]
 }
 
