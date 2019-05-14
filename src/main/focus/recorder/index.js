@@ -1,3 +1,5 @@
+const logger = require('../../../logger')('[RECORDER]')
+
 const newFocusTransaction = (focusChangeEvent, database, n) => () => database.sequelize.transaction(async transaction => {
   const { pid, path, exeName, timestamp } = focusChangeEvent
   const [program] = await database.Program.findCreateFind({ where: { exeName } }, { transaction })
@@ -11,8 +13,8 @@ const newFocusTransaction = (focusChangeEvent, database, n) => () => database.se
   }
   return await database.FocusSession.create(newSession, { transaction })
 })
-  .then(focusSession => console.log(`Saved new focus event #${n} for ${focusSession.exeName}`))
-  .catch(e => console.log('Failed to save new focus, transaction rolled back:', e))
+  .then(focusSession => logger.info(`Saved new focus event #${n} for ${focusSession.exeName}`))
+  .catch(e => logger.error('Failed to save new focus, transaction rolled back:', e))
 
 const endCurrentFocusTransaction = (timestamp, database) => () => database.sequelize.transaction(async (transaction) => {
   const [currentSession] = await database.FocusSession.findAll({ where: { isActive: true } })
@@ -25,8 +27,8 @@ const endCurrentFocusTransaction = (timestamp, database) => () => database.seque
   }
   return 'No active focus found to close'
 })
-  .then(console.log)
-  .catch(e => console.log('Failed to save focus end, transaction rolled back:', e))
+  .then(logger.info)
+  .catch(e => logger.error('Failed to save focus end, transaction rolled back:', e))
 
 module.exports = (enqueue) => {
   const startRecorder = (database, focusListener) => {
@@ -35,7 +37,7 @@ module.exports = (enqueue) => {
     focusListener.listener.on('data', (focusChangeEvent) => {
       if (shutdown) return
       const n = ++counter
-      console.log(`Detected focus change #${n}: ${focusChangeEvent.exeName}`)
+      logger.info(`Detected focus change #${n}: ${focusChangeEvent.exeName}`)
 
       enqueue(endCurrentFocusTransaction(focusChangeEvent.timestamp, database))
       enqueue(newFocusTransaction(focusChangeEvent, database, n))
@@ -43,18 +45,23 @@ module.exports = (enqueue) => {
 
     return () => {
       shutdown = true
-      console.log('shutting down recorder')
+      logger.info('Shutting down recorder...')
       return Promise.all([
         focusListener.end(),
         enqueue(endCurrentFocusTransaction(Date.now(), database)),
-      ])
+      ]).catch(e => logger.error('Error on shutdown:', e))
     }
   }
 
   const saveInitialFocus = async (database, pollFocus) => {
-    console.log('Polling for current focus...')
-    const activeFocus = await pollFocus()
-    return enqueue(newFocusTransaction(activeFocus, database, 0))
+    let activeFocus
+    try {
+      logger.info('Polling for current focus...')
+      activeFocus = await pollFocus()
+      return enqueue(newFocusTransaction(activeFocus, database, 0))
+    } catch (error) {
+      logger.error('Unable to record initial focus:', error)
+    }
   }
 
   return {

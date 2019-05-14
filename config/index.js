@@ -1,5 +1,6 @@
 const { app } = require('electron')
 const isDev = require('electron-is-dev')
+const logger = require('../src/logger')('[CONFIG]')
 
 const config = {
   development: {
@@ -40,6 +41,6 @@ const getConfig = () => {
 }
 
 const exportedConfig = getConfig()
-console.log('Using config:', exportedConfig)
+logger.info('Using config:', exportedConfig)
 
 module.exports = exportedConfig

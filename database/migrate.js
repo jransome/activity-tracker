@@ -1,4 +1,5 @@
 const Umzug = require('umzug')
+const logger = require('../src/logger')('[DATABASE]')
 
 const MIGRATIONS_DIRECTORY = `${__dirname}/migrations`
 
@@ -13,7 +14,7 @@ module.exports = (sequelizeInstance) => {
       path: MIGRATIONS_DIRECTORY,
       pattern: /\.js$/
     },
-    logging: console.log
+    logging: logger.debug
   })
 
   return umzug.up()

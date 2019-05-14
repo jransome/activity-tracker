@@ -1,5 +1,6 @@
 const path = require('path')
 const { EventEmitter } = require('events')
+const logger = require('../../../logger')('[LISTENER]')
 const Powershell = require('../../Powershell')
 
 const psArgs = ['-ExecutionPolicy', 'Unrestricted', '-NoLogo', '-NoExit', '-InputFormat', 'Text', '-Command', '-']
@@ -28,13 +29,14 @@ const focusListenerFactory = () => {
 
   let psProc
   try {
+    logger.debug('Starting up powershell child process...')
     psProc = new Powershell(psArgs, startMonitoringScript, stopMonitoringScript, dataHandler)
     psProc.start()
   } catch (error) {
-    console.error('Focus Listener powershell initialisation error', error) 
+    logger.error('Focus Listener powershell initialisation error', error) 
   }
 
-  return { listener: focusListener, end: psProc.end }
+  return { listener: focusListener, end: () => psProc.end() }
 }
 
 module.exports = focusListenerFactory
