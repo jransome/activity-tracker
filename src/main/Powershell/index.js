@@ -7,7 +7,6 @@ class Powershell {
     this._startScript = startScript
     this._stopScript = stopScript
     this._dataHandler = dataHandler
-    logger.info('bkldfsbhfb', this._startScript)
     this._spawn = () => spawn('powershell.exe', psArgs)
   }
 
