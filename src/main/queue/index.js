@@ -1,6 +1,8 @@
+const logger = require('../../logger')('[QUEUE]')
+
 let jobQueue = Promise.resolve()
 let queueLength = 0
-const errorHandler = (e) => console.error('[QUEUE] Error processing job:', e)
+const errorHandler = (e) => logger.error('Error processing job:', e)
 
 module.exports = (onQueueDrain) => (task) => {
   if (onQueueDrain) queueLength++

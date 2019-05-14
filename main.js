@@ -1,4 +1,5 @@
 const { app, BrowserWindow } = require('electron')
+const logger = require('./src/logger')('[MAIN]')
 const config = require('./config')
 const connectToDb = require('./database')
 const startRecording = require('./src/main/focus')
@@ -43,7 +44,7 @@ app.on('ready', () => {
     createWindow()
     startup()
   } catch (error) {
-    console.log('Startup error: ', error)
+    logger.error('Startup error: ', error)
   }
 })
 
@@ -52,7 +53,7 @@ app.on('window-all-closed', async () => {
   try {
     await exportSpreadsheet(database, userDocumentsPath)
   } catch (error) {
-    console.log('Exporting spreadsheet error: ' + error)
+    logger.error('Exporting spreadsheet error: ' + error)
   }
   if (process.platform !== 'darwin') app.quit()
 })

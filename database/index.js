@@ -1,5 +1,6 @@
 const fs = require('fs')
 const Sequelize = require('sequelize')
+const logger = require('../src/logger')('[DATABASE]')
 const runMigrations = require('./migrate')
 const importModels = require('./models')
 
@@ -9,19 +10,19 @@ module.exports = async (config) => {
   const sequelize = new Sequelize(name, username, password, config)
 
   if (!dbIsPreExisting) {
-    console.log('No pre-existing db was detected, new db created.')
+    logger.info('No pre-existing db was detected, new db created.')
     try {
       // use Write-Ahead Logging for speed benefits
       await sequelize.query("PRAGMA journal_mode=WAL;")
     } catch (error) {
-      console.error('Error setting WAL:', error)
+      logger.error('Error setting WAL:', error)
     }
   
     try {
-      console.log('Running migrations...')
+      logger.info('Running migrations...')
       await runMigrations(sequelize)
     } catch (error) {
-      console.error('Error on database migration check:', error)
+      logger.error('Error on database migration check:', error)
     }
   }
 
@@ -29,7 +30,7 @@ module.exports = async (config) => {
   try {
     models = importModels(sequelize)
   } catch (error) {
-    console.error('Database models import error:', error)
+    logger.error('Database models import error:', error)
   }
 
   return {
