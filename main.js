@@ -50,7 +50,7 @@ app.on('ready', () => {
 })
 
 app.on('window-all-closed', async () => {
-  logger.info('All windows closed')
+  logger.debug('All windows closed')
   await isStartedUp
   await focusRecorder.stopRecording()
   try {
