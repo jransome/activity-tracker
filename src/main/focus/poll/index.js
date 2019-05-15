@@ -26,7 +26,7 @@ module.exports = () => Promise.race([pollTimeout, new Promise((resolve, reject) 
       const event = tryJsonParse(data)
       event.exeName = event.path.trim().split('/').slice(-1)[0]
       event.timestamp = new Date()
-      logger.debug('Found current focus')
+      logger.debug(`Found current focus: ${event.exeName}`)
       await psProc.end()
       logger.debug('Ended powershell child process')
       resolve(event)

@@ -32,7 +32,7 @@ class Powershell {
 
     this._psProc.stderr.on('data', err => logger.error('Error in Powershell script execution: ', err))
 
-    this._psProc.stdout.on('data', data => this._dataHandler(data))
+    this._psProc.stdout.on('data', data => data.split('\n').forEach(line => this._dataHandler(line)))
 
     this._psProc.stdin.write(this._startScript)
   }
