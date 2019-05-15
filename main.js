@@ -7,6 +7,7 @@ const startRecording = require('./src/main/focus')
 const exportSpreadsheet = require('./src/main/exportSpreadsheet')
 
 const { userDocumentsPath } = config
+let isStartedUp
 let database
 let focusRecorder
 let mainWindow
@@ -21,7 +22,7 @@ if (instanceAlreadyRunning) app.quit()
 
 async function startup() {
   database = await connectToDb(config)
-  focusRecorder = startRecording(database)
+  focusRecorder = await startRecording(database)
 }
 
 const createWindow = () => {
@@ -42,13 +43,15 @@ const createWindow = () => {
 app.on('ready', () => {
   try {
     createWindow()
-    startup()
+    isStartedUp = startup()
   } catch (error) {
     logger.error('Startup error: ', error)
   }
 })
 
 app.on('window-all-closed', async () => {
+  logger.info('All windows closed')
+  await isStartedUp
   await focusRecorder.stopRecording()
   try {
     await exportSpreadsheet(database, userDocumentsPath)

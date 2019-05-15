@@ -32,6 +32,7 @@ const endCurrentFocusTransaction = (timestamp, database) => () => database.seque
 
 module.exports = (enqueue) => {
   const startRecorder = (database, focusListener) => {
+    logger.info('Recording focus changes...')
     let shutdown = false
     let counter = 0
     focusListener.listener.on('data', (focusChangeEvent) => {
@@ -58,7 +59,7 @@ module.exports = (enqueue) => {
     try {
       logger.info('Polling for current focus...')
       activeFocus = await pollFocus()
-      return enqueue(newFocusTransaction(activeFocus, database, 0)).then(() => logger.info('Initial focus saved'))
+      return enqueue(newFocusTransaction(activeFocus, database, 0)).then(() => logger.info('Initial focus saved:', activeFocus.exeName))
     } catch (error) {
       logger.error('Unable to record initial focus:', error)
     }
