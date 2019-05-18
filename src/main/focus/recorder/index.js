@@ -29,19 +29,11 @@ module.exports = (enqueue) => {
     let currentFocus = await pollCurrentFocus(poller)
 
     logger.info('Recording focus changes...')
-    focusListener.listener.on('data', (focusChangeEvent) => {
-      if (shutdown || (currentFocus && currentFocus.exeName === focusChangeEvent.exeName)) return
-      const now = new Date()
-      logger.info(`Detected focus change #${++counter}: ${focusChangeEvent.exeName}`)
-
-      if (currentFocus) enqueue(newFocusTransaction({ ...currentFocus, duration: now - currentFocus.startTime }, database))
-
-      currentFocus = {
-        pid: focusChangeEvent.pid,
-        path: focusChangeEvent.path,
-        exeName: focusChangeEvent.exeName,
-        startTime: now,
-      }
+    focusListener.listener.on('data', (newFocus) => {
+      if (shutdown || (currentFocus && currentFocus.exeName === newFocus.exeName)) return
+      logger.info(`Detected focus change #${++counter}: ${newFocus.exeName}`)
+      if (currentFocus) enqueue(newFocusTransaction({ ...currentFocus, duration: newFocus.startTime - currentFocus.startTime }, database))
+      currentFocus = newFocus
     })
 
     return () => {
