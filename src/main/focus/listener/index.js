@@ -7,24 +7,22 @@ const psArgs = ['-ExecutionPolicy', 'Unrestricted', '-NoLogo', '-NoExit', '-Inpu
 const startMonitoringScript = `${path.resolve(__dirname, './focus-monitor-start.ps1')} \n`
 const stopMonitoringScript = `${path.resolve(__dirname, './focus-monitor-stop.ps1')} \n`
 
-const parseData = (data) => {
+const parse = (data) => {
   const parsed = data.split('_FOCUS_CHANGE_')
-  return parsed.length === 2 ? parsed : null
+  return parsed.length === 2 ? {
+    pid: parseInt(parsed[0]),
+    path: parsed[1].trim(),
+    exeName: parsed[1].trim().split('\\').slice(-1)[0],
+    startTime: new Date()
+  } : null
 }
 
 const focusListenerFactory = () => {
   const focusListener = new EventEmitter()
 
   const dataHandler = (data) => {
-    const parsedData = parseData(data)
-    if (parsedData) {
-      focusListener.emit('data', {
-        pid: parseInt(parsedData[0]),
-        path: parsedData[1].trim(),
-        exeName: parsedData[1].trim().split("\\").slice(-1)[0],
-        timestamp: new Date()
-      })
-    }
+    const parsedData = parse(data)
+    if (parsedData) focusListener.emit('data', parsedData)
   }
 
   let psProc
