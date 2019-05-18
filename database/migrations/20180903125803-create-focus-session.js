@@ -25,13 +25,7 @@ module.exports = {
       exeName: {
         type: Sequelize.STRING
       },
-      isActive: {
-        type: Sequelize.BOOLEAN
-      },
       startTime: {
-        type: Sequelize.DATE
-      },
-      endTime: {
         type: Sequelize.DATE
       },
       duration: {

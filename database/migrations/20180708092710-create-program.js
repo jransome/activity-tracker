@@ -19,9 +19,6 @@ module.exports = {
       focusTime: {
         type: Sequelize.BIGINT.UNSIGNED
       },
-      upTime: {
-        type: Sequelize.BIGINT.UNSIGNED
-      },
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE
