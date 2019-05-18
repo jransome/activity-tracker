@@ -14,11 +14,11 @@ const parseData = (data) => {
 
 const focusListenerFactory = () => {
   const focusListener = new EventEmitter()
-  
+
   const dataHandler = (data) => {
     const parsedData = parseData(data)
     if (parsedData) {
-      focusListener.emit('data' ,{
+      focusListener.emit('data', {
         pid: parseInt(parsedData[0]),
         path: parsedData[1].trim(),
         exeName: parsedData[1].trim().split("\\").slice(-1)[0],
@@ -33,7 +33,7 @@ const focusListenerFactory = () => {
     psProc = new Powershell(psArgs, startMonitoringScript, stopMonitoringScript, dataHandler)
     psProc.start()
   } catch (error) {
-    logger.error('Focus Listener powershell initialisation error', error) 
+    logger.error('Focus Listener powershell initialisation error', error)
   }
 
   return { listener: focusListener, end: () => psProc.end() }

@@ -35,8 +35,10 @@ module.exports = (enqueue) => {
     logger.info('Recording focus changes...')
     let shutdown = false
     let counter = 0
+    let last = null
     focusListener.listener.on('data', (focusChangeEvent) => {
-      if (shutdown) return
+      if (shutdown || focusChangeEvent.exeName === last) return
+      last = focusChangeEvent.exeName
       const n = ++counter
       logger.info(`Detected focus change #${n}: ${focusChangeEvent.exeName}`)
 
