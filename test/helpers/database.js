@@ -1,9 +1,9 @@
-const reset = async (db) => {
+const reset = (db) => {
   const models = Object.keys(db).filter(key => key.toLowerCase() !== 'sequelize')
-  models.forEach(async (model) => {
-    await db[model].destroy({ where: {}, force: true, truncate: true })
-    await db.sequelize.query(`DELETE FROM SQLITE_SEQUENCE WHERE NAME='${model}s';`)
-  })
+  return Promise.all(models.reduce((acc, model) => acc.concat([
+    db[model].destroy({ where: {}, force: true }),
+    db.sequelize.query(`DELETE FROM SQLITE_SEQUENCE WHERE NAME='${model}s';`)
+  ]), []))
 }
 
 const getAllModels = async (db) => ({
