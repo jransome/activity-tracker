@@ -11,21 +11,7 @@ const getAllModels = async (db) => ({
   programs: await db.Program.findAll(),
 })
 
-const createFakeSession = async (db, exeName, now) => {
-  const [program] = await db.Program.findCreateFind({ where: { exeName } })
-  const newSession = {
-    pid: 123,
-    path: 'not important',
-    exeName,
-    isActive: true,
-    startTime: now || new Date(),
-    ProgramId: program.id,
-  }
-  await db.FocusSession.create(newSession)
-}
-
 module.exports = {
   reset,
   getAllModels,
-  createFakeSession,
 }

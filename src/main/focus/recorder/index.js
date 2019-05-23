@@ -14,7 +14,6 @@ const pollCurrentFocus = async (poller) => {
   try {
     logger.info('Polling for current focus...')
     current = await poller()
-    current.startTime = new Date()
     logger.info('Initial focus found:', current.exeName)
   } catch (error) {
     logger.error('Unable to record initial focus:', error)
@@ -36,12 +35,12 @@ module.exports = (enqueue) => {
       currentFocus = newFocus
     })
 
-    return () => {
+    return (now = new Date()) => {
       shutdown = true
       logger.info('Shutting down recorder...')
       return Promise.all([
         focusListener.end(),
-        currentFocus ? enqueue(newFocusTransaction({ ...currentFocus, duration: new Date() - currentFocus.startTime }, database)) : Promise.resolve(),
+        currentFocus ? enqueue(newFocusTransaction({ ...currentFocus, duration: now - currentFocus.startTime }, database)) : Promise.resolve(),
       ]).catch(e => logger.error('Error on shutdown:', e))
     }
   }
