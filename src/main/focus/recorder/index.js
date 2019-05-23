@@ -2,11 +2,13 @@ const logger = require('../../../logger')('[RECORDER]')
 
 const newFocusTransaction = (focusSession, database) => () => database.sequelize.transaction(async transaction => {
   const [program] = await database.Program.findOrCreate({ where: { exeName: focusSession.exeName }, defaults: { focusTime: 0 }, transaction })
-  await program.update({ focusTime: program.focusTime + focusSession.duration }, { transaction })
   focusSession.ProgramId = program.id
-  return await database.FocusSession.create(focusSession, { transaction })
+  return Promise.all([
+    database.FocusSession.create(focusSession, { transaction }),
+    program.update({ focusTime: program.focusTime + focusSession.duration }, { transaction }),
+  ])
 })
-  .then(focusSession => logger.info(`Saved focus session for ${focusSession.exeName}`))
+  .then(([focusSession]) => logger.info(`Saved focus session for ${focusSession.exeName}`))
   .catch(e => logger.error('Failed to save focus, transaction rolled back:', e))
 
 const pollCurrentFocus = async (poller) => {
