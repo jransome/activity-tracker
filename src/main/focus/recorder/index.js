@@ -1,10 +1,10 @@
 const logger = require('../../../logger')('[RECORDER]')
 
-const newFocusTransaction = (focusSession, database) => () => database.sequelize.transaction(async transaction => {
-  const [program] = await database.Program.findOrCreate({ where: { exeName: focusSession.exeName }, defaults: { focusTime: 0 }, transaction })
+const newFocusTransaction = (focusSession, database) => () => database.transaction(async transaction => {
+  const [program] = await database.models.Program.findOrCreate({ where: { exeName: focusSession.exeName }, defaults: { focusTime: 0 }, transaction })
   focusSession.ProgramId = program.id
   return Promise.all([
-    database.FocusSession.create(focusSession, { transaction }),
+    database.models.FocusSession.create(focusSession, { transaction }),
     program.update({ focusTime: program.focusTime + focusSession.duration }, { transaction }),
   ])
 })

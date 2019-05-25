@@ -4,40 +4,22 @@ const logger = require('../../logger')('[EXCEL]')
 
 const styles = { header: { font: { bold: true } } }
 
-const getTablesFromDb = (db) => {
-  const tables = []
-
-  for (const tableName in db) {
-    if (tableName.toLowerCase() === 'sequelize') continue
-    if (!db.hasOwnProperty(tableName)) continue
-
-    tables.push({ tableName, table: db[tableName] })
+const createSpecification = (tableAttributes) => Object.keys(tableAttributes).reduce((acc, field) => {
+  acc[field] = {
+    displayName: field,
+    headerStyle: styles.header,
+    width: 180,
   }
+  return acc
+}, {}) 
 
-  return tables
-}
+const createWorksheet = async ([tableName, table]) => ({
+  name: tableName,
+  specification: createSpecification(table.rawAttributes),
+  data: await table.findAll({ raw: true })
+})
 
-const createSpecification = (tableAttributes) => {
-  const specification = {}
-  for (const field in tableAttributes) {
-    specification[field] = {
-      displayName: field,
-      headerStyle: styles.header,
-      width: 180
-    }
-  }
-  return specification
-}
-
-const createWorksheet = async ({ tableName, table }) => {
-  return {
-    name: tableName,
-    specification: createSpecification(table.rawAttributes),
-    data: await table.findAll({ raw: true })
-  }
-}
-
-const saveLogFile = (logDir, filename, xls) => new Promise((resolve, reject) => {
+const saveExcelFile = (logDir, filename, workbook) => new Promise((resolve, reject) => {
   fs.mkdir(logDir, (err) => {
     if (err && err.code !== 'EEXIST') {
       reject("Failed to make logs directory: " + err)
@@ -45,8 +27,7 @@ const saveLogFile = (logDir, filename, xls) => new Promise((resolve, reject) => 
     }
 
     const filepath = `${logDir}/${filename}`
-
-    fs.writeFile(filepath, xls, 'binary', (err) => {
+    fs.writeFile(filepath, workbook, 'binary', (err) => {
       if (err) {
         reject(err)
         return
@@ -58,16 +39,11 @@ const saveLogFile = (logDir, filename, xls) => new Promise((resolve, reject) => 
 })
 
 
-const exportSpreadsheet = async (db, userDocumentsPath) => {
-  const tables = getTablesFromDb(db)
+module.exports = async ({ models }, userDocumentsPath) => {
+  const worksheets = await Promise.all(Object.entries(models).map(kvp => createWorksheet(kvp)))
+  const workbook = excel.buildExport(worksheets)
 
-  const worksheets = await Promise.all(tables.map((t) => createWorksheet(t)))
-  const xls = excel.buildExport(worksheets)
-
-  const logDir = `${userDocumentsPath}/Activity Monitor logs`
+  const logDir = `${userDocumentsPath}/Activity Monitor logs/`
   const filename = `log-${Date.now()}.xlsx`
-
-  await saveLogFile(logDir, filename, xls)
+  await saveExcelFile(logDir, filename, workbook)
 }
-
-module.exports = exportSpreadsheet
