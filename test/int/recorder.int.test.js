@@ -48,6 +48,7 @@ describe('recording focus', async () => {
   })
 
   beforeEach(async () => {
+    jest.resetAllMocks()
     mockPoller = jest.fn()
     mockListener = {
       listener: new EventEmitter(),
@@ -179,7 +180,35 @@ describe('recording focus', async () => {
     })
   })
 
-  xdescribe('on ungraceful termination', () => {
-    it('the database is not left in an impossible state', async () => { })
+  describe('if initial polling fails', () => {
+    it('is able to continue recording', async () => {
+      let enqueueFunction
+      const internalQueueDrained = new Promise(res => {
+        enqueueFunction = queueFactory(() => res())
+      })
+
+      mockPoller.mockRejectedValue('FAIL')
+      const startRecorder = recorderFactory(enqueueFunction)
+
+      await startRecorder(dbConnection, mockPoller, mockListener)
+      mockListener.listener.emit('data', mockFocusEvents[1])
+      mockListener.listener.emit('data', mockFocusEvents[2])
+      mockListener.listener.emit('data', mockFocusEvents[3])
+      await internalQueueDrained
+
+      const { focusSessions, programs } = await databaseHelpers.getAllModels(dbConnection)
+      expect(focusSessions.length).toEqual(2)
+      expect(focusSessions[0].exeName).toEqual(mockFocusEvents[1].exeName)
+      expect(focusSessions[0].duration).toEqual(mockFocusEvents[2].startTime - mockFocusEvents[1].startTime)
+      expect(focusSessions[1].exeName).toEqual(mockFocusEvents[2].exeName)
+      expect(focusSessions[1].duration).toEqual(mockFocusEvents[3].startTime - mockFocusEvents[2].startTime)
+      expect(programs.length).toEqual(2)
+      expect(programs[0].id).toEqual(focusSessions[0].ProgramId)
+      expect(programs[0].exeName).toEqual(mockFocusEvents[1].exeName)
+      expect(programs[0].focusTime).toEqual(focusSessions[0].duration)
+      expect(programs[1].id).toEqual(focusSessions[1].ProgramId)
+      expect(programs[1].exeName).toEqual(mockFocusEvents[2].exeName)
+      expect(programs[1].focusTime).toEqual(focusSessions[1].duration)
+    })
   })
 })
