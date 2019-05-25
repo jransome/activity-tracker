@@ -17,7 +17,7 @@ module.exports = async (config) => {
     } catch (error) {
       logger.error('Error setting WAL:', error)
     }
-  
+
     try {
       logger.info('Running migrations...')
       await runMigrations(sequelize)
@@ -34,8 +34,8 @@ module.exports = async (config) => {
   }
 
   return {
-    ...models,
-    sequelize,
-    Sequelize,
+    models,
+    query: (...args) => sequelize.query(...args),
+    transaction: (...args) => sequelize.transaction(...args),
   }
 }

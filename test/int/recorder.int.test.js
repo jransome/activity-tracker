@@ -187,7 +187,7 @@ describe('recording focus', async () => {
         enqueueFunction = queueFactory(() => res())
       })
 
-      mockPoller.mockRejectedValue('FAIL')
+      mockPoller.mockRejectedValue('MOCK FAIL')
       const startRecorder = recorderFactory(enqueueFunction)
 
       await startRecorder(dbConnection, mockPoller, mockListener)

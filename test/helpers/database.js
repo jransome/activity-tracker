@@ -1,14 +1,14 @@
 const reset = (db) => {
-  const models = Object.keys(db).filter(key => key.toLowerCase() !== 'sequelize')
+  const models = Object.keys(db.models)
   return Promise.all(models.reduce((acc, model) => acc.concat([
-    db[model].destroy({ where: {}, force: true }),
-    db.sequelize.query(`DELETE FROM SQLITE_SEQUENCE WHERE NAME='${model}s';`)
+    db.models[model].destroy({ where: {}, force: true }),
+    db.query(`DELETE FROM SQLITE_SEQUENCE WHERE NAME='${model}s';`)
   ]), []))
 }
 
-const getAllModels = async (db) => ({
-  focusSessions: await db.FocusSession.findAll(),
-  programs: await db.Program.findAll(),
+const getAllModels = async ({ models }) => ({
+  focusSessions: await models.FocusSession.findAll(),
+  programs: await models.Program.findAll(),
 })
 
 module.exports = {
