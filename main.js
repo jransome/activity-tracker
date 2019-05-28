@@ -27,7 +27,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({ width: 800, height: 600, show: false })
   mainWindow.loadFile('index.html')
 
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
