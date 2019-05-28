@@ -6,11 +6,10 @@ const importModels = require('./models')
 
 module.exports = async (config) => {
   const { name, username, password, storage } = config
-  const dbIsPreExisting = fs.existsSync(storage)
   const sequelize = new Sequelize(name, username, password, config)
 
-  if (!dbIsPreExisting) {
-    logger.info('No pre-existing db was detected, new db created.')
+  if (process.argv[1] === '--squirrel-firstrun' || !fs.existsSync(storage)) {
+    // first time run OR database doesn't exist
     try {
       // use Write-Ahead Logging for speed benefits
       await sequelize.query("PRAGMA journal_mode=WAL;")
