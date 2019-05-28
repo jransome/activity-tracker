@@ -8,7 +8,7 @@ const newFocusTransaction = (focusSession, database) => () => database.transacti
     program.update({ focusTime: program.focusTime + focusSession.duration }, { transaction }),
   ])
 })
-  .then(([focusSession]) => logger.info(`Saved focus session for ${focusSession.exeName}`))
+  .then(([focusSession]) => logger.info(`Saved focus session for ${focusSession.exeName}, duration: ${focusSession.duration / 60000} minutes`))
   .catch(e => logger.error('Failed to save focus, transaction rolled back:', e))
 
 const pollCurrentFocus = async (poller) => {

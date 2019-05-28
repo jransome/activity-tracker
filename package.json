@@ -10,7 +10,7 @@
       "output": "./dist"
     },
     "win": {
-      "asar": "true",
+      "asar": "false",
       "target": "nsis",
       "icon": "assets/icons/icon.png"
     }
