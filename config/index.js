@@ -1,46 +1,29 @@
-const { app } = require('electron')
-const isDev = require('electron-is-dev')
 const logger = require('../src/logger')('[CONFIG]')
 
-const config = {
-  development: {
-    username: "root",
-    password: null,
-    name: "database_development",
-    storage: "./directory-stubs/userData/db_dev.sqlite3",
-    dialect: "sqlite",
-    operatorsAliases: false,
-    logging: false,
-    userDocumentsPath: "./directory-stubs/documents",
-  },
-  test: {
-    username: "root",
-    password: null,
-    name: "database_test",
-    storage: "./directory-stubs/userData/db_test.sqlite3",
-    dialect: "sqlite",
-    operatorsAliases: false,
-    logging: false,
-    userDocumentsPath: "./directory-stubs/documents",
-  },
-  // production: {
-  //   username: "root",
-  //   password: null,
-  //   name: "database_production",
-  //   storage: `${app.getPath('userData')}/db.sqlite3`,
-  //   dialect: "sqlite",
-  //   operatorsAliases: false,
-  //   logging: false,
-  //   userDocumentsPath: app.getPath('documents'),
-  // }
+const defaults = {
+  username: 'root',
+  password: null,
+  name: 'database',
+  dialect: 'sqlite',
+  operatorsAliases: false,
+  logging: false,
+  userDocumentsPath: './directory-stubs/documents',
 }
 
-const getConfig = () => {
-  // if (!isDev) return config.production
-  return config[process.env.NODE_ENV.trim()]
+module.exports = (appInstance) => {
+  const environment = process.env.ENVIRONMENT ? process.env.ENVIRONMENT : 'production'
+  const config = environment !== 'production' ?
+    {
+      ...defaults,
+      storage: `./directory-stubs/userData/db_${environment}.sqlite3`
+    }
+    :
+    {
+      ...defaults,
+      storage: `${appInstance.getPath('userData')}/db.sqlite3`,
+      userDocumentsPath: appInstance.getPath('documents'),
+    }
+
+  logger.debug(`Using ${environment} config:`, config)
+  return config
 }
-
-const exportedConfig = getConfig()
-logger.info('Using config:', exportedConfig)
-
-module.exports = exportedConfig
