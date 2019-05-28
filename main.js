@@ -1,12 +1,10 @@
 const { app, BrowserWindow } = require('electron')
+const config = require('./config')(app)
 const logger = require('./src/logger')('[MAIN]')
-const config = require('./config')
 const connectToDb = require('./database')
 const startRecording = require('./src/main/focus')
-
 const exportSpreadsheet = require('./src/main/exportSpreadsheet')
 
-const { userDocumentsPath } = config
 let isStartedUp
 let database
 let focusRecorder
@@ -57,7 +55,7 @@ app.on('window-all-closed', async () => {
   await isStartedUp
   await focusRecorder.stopRecording()
   try {
-    await exportSpreadsheet(database, userDocumentsPath)
+    await exportSpreadsheet(database, config.userDocumentsPath)
   } catch (error) {
     logger.error('Exporting spreadsheet error: ' + error)
   }

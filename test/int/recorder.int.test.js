@@ -1,6 +1,6 @@
 const { EventEmitter } = require('events')
 const databaseHelpers = require('../helpers/database')
-const config = require('../../config')
+const config = require('../../config')()
 const initDb = require('../../database')
 const queueFactory = require('../../src/main/queue')
 const recorderFactory = require('../../src/main/focus/recorder')
