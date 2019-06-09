@@ -1,4 +1,5 @@
 const logger = require('../../../logger')('[RECORDER]')
+const { printMilisecondsAsMinSecs } = require('../../../helper')
 
 const newFocusTransaction = (focusSession, database) => () => database.transaction(async transaction => {
   const [program] = await database.models.Program.findOrCreate({ where: { exeName: focusSession.exeName }, defaults: { focusTime: 0 }, transaction })
@@ -8,7 +9,7 @@ const newFocusTransaction = (focusSession, database) => () => database.transacti
     program.update({ focusTime: program.focusTime + focusSession.duration }, { transaction }),
   ])
 })
-  .then(([focusSession]) => logger.info(`Saved focus session for ${focusSession.exeName}, duration: ${focusSession.duration / 60000} minutes`))
+  .then(([focusSession]) => logger.info(`Saved focus session for ${focusSession.exeName}, duration: ${printMilisecondsAsMinSecs(focusSession.duration)}`))
   .catch(e => logger.error('Failed to save focus, transaction rolled back:', e))
 
 const pollCurrentFocus = async (poller) => {
