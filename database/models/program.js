@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const Program = sequelize.define('Program', {
     exeName: DataTypes.STRING,
-    focusTime: DataTypes.BIGINT.UNSIGNED,
+    focusTime: DataTypes.BIGINT,
   }, {})
 
   Program.associate = (models) => {

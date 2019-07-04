@@ -5,7 +5,6 @@ const defaults = {
   password: null,
   name: 'database',
   dialect: 'sqlite',
-  operatorsAliases: false,
   logging: false,
   userDocumentsPath: './directory-stubs/documents',
 }

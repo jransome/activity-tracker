@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     pid: DataTypes.INTEGER,
     exeName: DataTypes.STRING,
     startTime: DataTypes.DATE,
-    duration: DataTypes.BIGINT.UNSIGNED,
+    duration: DataTypes.BIGINT,
   }, {})
 
   FocusSession.associate = (models) => {
