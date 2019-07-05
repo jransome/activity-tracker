@@ -3,6 +3,5 @@ interface db
 electron logs
 add start/stop recording controls to ui
 refactor/create ui logging class
-minimise to system tray
 closing listener processes on shutdown?
 detect user idle time

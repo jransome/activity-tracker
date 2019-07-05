@@ -1,4 +1,5 @@
-const { app, BrowserWindow } = require('electron')
+const path = require('path')
+const { app, BrowserWindow, Tray, Menu } = require('electron')
 const config = require('./config')(app)
 const logger = require('./lib/logger')('[MAIN]')
 const connectToDb = require('./database')
@@ -6,9 +7,11 @@ const startRecording = require('./lib/focus')
 const exportSpreadsheet = require('./lib/exportSpreadsheet')
 
 let isStartedUp
+let isQuitting
 let database
 let focusRecorder
 let mainWindow
+let tray
 
 const instanceAlreadyRunning = app.makeSingleInstance(() => {
   if (!mainWindow) return
@@ -23,6 +26,22 @@ async function startup() {
   focusRecorder = await startRecording(database)
 }
 
+async function quitApp() {
+  isQuitting = true
+  logger.debug('Quiting activity tracker...')
+  mainWindow = null
+  tray = null
+  await isStartedUp
+  await focusRecorder.stopRecording()
+  try {
+    await exportSpreadsheet(database, config.userDocumentsPath)
+  } catch (error) {
+    logger.error('Exporting spreadsheet error: ' + error)
+  }
+  logger.debug('Shutdown process complete')
+  app.quit()
+}
+
 const createWindow = () => {
   mainWindow = new BrowserWindow({ width: 800, height: 600, show: false })
   mainWindow.loadFile('views/index.html')
@@ -33,12 +52,29 @@ const createWindow = () => {
     mainWindow.show()
   })
 
-  mainWindow.on('closed', () => {
-    mainWindow = null
+  mainWindow.on('minimize', (e) => {
+    e.preventDefault()
+    mainWindow.hide()
+  })
+
+  mainWindow.on('close', (e) => {
+    if (!isQuitting) {
+      e.preventDefault()
+      if (mainWindow) mainWindow.hide()
+      e.returnValue = false
+    }
   })
 }
 
 app.on('ready', () => {
+  tray = new Tray(path.join(__dirname, 'assets/icons/icon.ico'))
+  tray.setToolTip('Ransome Corp. Activity Tracker')
+  tray.on('double-click', () => {
+    if (mainWindow) mainWindow.show()
+  })
+  const trayMenu = Menu.buildFromTemplate([{ label: 'Quit', click: quitApp }])
+  tray.setContextMenu(trayMenu)
+
   try {
     createWindow()
     logger.registerListener((logObject) => {
@@ -48,18 +84,6 @@ app.on('ready', () => {
   } catch (error) {
     logger.error('Startup error: ', error)
   }
-})
-
-app.on('window-all-closed', async () => {
-  logger.debug('All windows closed')
-  await isStartedUp
-  await focusRecorder.stopRecording()
-  try {
-    await exportSpreadsheet(database, config.userDocumentsPath)
-  } catch (error) {
-    logger.error('Exporting spreadsheet error: ' + error)
-  }
-  if (process.platform !== 'darwin') app.quit()
 })
 
 app.on('activate', () => {
