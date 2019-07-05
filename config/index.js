@@ -1,4 +1,4 @@
-const logger = require('../src/logger')('[CONFIG]')
+const logger = require('../lib/logger')('[CONFIG]')
 
 const defaults = {
   username: 'root',

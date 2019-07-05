@@ -1,9 +1,9 @@
 const { app, BrowserWindow } = require('electron')
 const config = require('./config')(app)
-const logger = require('./src/logger')('[MAIN]')
+const logger = require('./lib/logger')('[MAIN]')
 const connectToDb = require('./database')
-const startRecording = require('./src/main/focus')
-const exportSpreadsheet = require('./src/main/exportSpreadsheet')
+const startRecording = require('./lib/focus')
+const exportSpreadsheet = require('./lib/exportSpreadsheet')
 
 let isStartedUp
 let database
@@ -25,7 +25,7 @@ async function startup() {
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({ width: 800, height: 600, show: false })
-  mainWindow.loadFile('index.html')
+  mainWindow.loadFile('views/index.html')
 
   // mainWindow.webContents.openDevTools()
 

@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize')
-const logger = require('../src/logger')('[DATABASE]')
+const logger = require('../lib/logger')('[DATABASE]')
 const runMigrations = require('./migrate')
 const importModels = require('./models')
 

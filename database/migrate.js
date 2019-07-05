@@ -1,5 +1,5 @@
 const Umzug = require('umzug')
-const logger = require('../src/logger')('[DATABASE]')
+const logger = require('../lib/logger')('[DATABASE]')
 
 const MIGRATIONS_DIRECTORY = `${__dirname}/migrations`
 
