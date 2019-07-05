@@ -1,9 +1,12 @@
 const { ipcRenderer } = require('electron')
 
-const logList = document.querySelector('#logs')
+const logTable = document.querySelector('#logs')
 
-ipcRenderer.on('log-update', (event, log) => {
-  const newLog = document.createElement('li')
-  newLog.textContent = log
-  logList.appendChild(newLog)
+const constructLogRow = ({ timestamp, source, message }) =>
+  `<tr>
+    <td>${timestamp}</td><td>${source}</td><td>${message.join(' ')}</td>
+  </tr>`
+
+ipcRenderer.on('log-update', (event, data) => {
+  logTable.innerHTML += constructLogRow(data)
 })

@@ -41,8 +41,8 @@ const createWindow = () => {
 app.on('ready', () => {
   try {
     createWindow()
-    logger.registerListener((log) => {
-      if (mainWindow) mainWindow.webContents.send('log-update', log)
+    logger.registerListener((logObject) => {
+      if (mainWindow) mainWindow.webContents.send('log-update', logObject)
     })
     isStartedUp = startup()
   } catch (error) {

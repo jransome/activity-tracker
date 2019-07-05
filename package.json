@@ -26,6 +26,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "materialize-css": "^1.0.0-rc.2",
     "node-excel-export": "^1.4.4",
     "sequelize": "^5.9.2",
     "sequelize-cli": "^5.5.0",

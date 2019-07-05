@@ -4,15 +4,26 @@
 <head>
   <meta charset="utf-8" />
   <title>Activity Tracker</title>
-  <script defer src="./index.js"></script>
+  <link defer type="text/css" rel="stylesheet" href="materialize/materialize.min.css"  media="screen,projection"/>
+  <script defer type="text/javascript" src="materialize/materialize.min.js"></script>
+  <script defer type="text/javascript" src="./index.js"></script>
 </head>
 
 <body>
-  <div id="console">
+  <div id="console" class="container">
     <h1>Logs</h1>
-    <div class="logs-container">
-      <ul id="logs"></ul>
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Module</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody id="logs">
+
+      </tbody>
+    </table>
   </div>
 </body>
 
