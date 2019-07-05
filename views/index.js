@@ -9,4 +9,9 @@ const constructLogRow = ({ timestamp, source, message }) =>
 
 ipcRenderer.on('log-update', (event, data) => {
   logTable.innerHTML += constructLogRow(data)
+  window.scrollTo({
+    left: 0,
+    top: document.body.scrollHeight,
+    behavior: 'smooth',
+  })
 })
