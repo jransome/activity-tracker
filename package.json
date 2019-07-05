@@ -1,7 +1,7 @@
 {
   "name": "activity-tracker",
   "productName": "ActivityTracker",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "Activity Tracker",
   "main": "main.js",
   "build": {
