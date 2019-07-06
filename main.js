@@ -1,5 +1,6 @@
 const path = require('path')
-const { app, BrowserWindow, Tray, Menu } = require('electron')
+const electron = require('electron')
+const { app, BrowserWindow, Tray, Menu } = electron
 const config = require('./config')(app)
 const logger = require('./lib/logger')('[MAIN]')
 const connectToDb = require('./database')
@@ -23,7 +24,7 @@ if (instanceAlreadyRunning) app.quit()
 
 async function startup() {
   database = await connectToDb(config)
-  focusRecorder = await startRecording(database)
+  focusRecorder = await startRecording(database, electron.powerMonitor)
 }
 
 async function quitApp() {
