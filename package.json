@@ -29,7 +29,7 @@
     "d3": "^5.9.7",
     "materialize-css": "^1.0.0-rc.2",
     "node-excel-export": "^1.4.4",
-    "sequelize": "^5.9.2",
+    "sequelize": "^5.15.1",
     "sequelize-cli": "^5.5.0",
     "sqlite3": "^4.0.9",
     "umzug": "^2.2.0"
