@@ -21,7 +21,7 @@
     "postinstall": "install-app-deps",
     "db:destroy": "rm ./directory-stubs/userData/*.sqlite3*",
     "db:migrate": "set ENVIRONMENT=development node_modules/.bin/sequelize db:migrate",
-    "test": "set ENVIRONMENT=test && jest --runInBand --verbose=false"
+    "test": "set ENVIRONMENT=test && jest --runInBand"
   },
   "author": "",
   "license": "ISC",
@@ -39,5 +39,8 @@
     "electron": "^2.0.18",
     "electron-builder": "^20.43.0",
     "jest": "^24.8.0"
+  },
+  "jest": {
+    "testPathIgnorePatterns": ["<rootDir>/dist"]
   }
 }

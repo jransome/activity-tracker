@@ -5,7 +5,7 @@ const initDb = require('../../database')
 const queueFactory = require('../../lib/queue')
 const recorderFactory = require('../../lib/focus/recorder')
 
-describe('recording focus', async () => {
+describe('recording focus', () => {
   let dbConnection;
   let mockPoller;
   let mockListener;
@@ -62,7 +62,7 @@ describe('recording focus', async () => {
     it('records the program that had focus on startup', async () => {
       let enqueueFunction
       const internalQueueDrained = new Promise(res => {
-        enqueueFunction = queueFactory(() => res())
+        enqueueFunction = queueFactory(res)
       })
       mockPoller.mockResolvedValue(mockFocusEvents[0])
       const startRecorder = recorderFactory(enqueueFunction)
@@ -84,7 +84,7 @@ describe('recording focus', async () => {
     it('records programs only after they lose focus', async () => {
       let enqueueFunction
       const internalQueueDrained = new Promise(res => {
-        enqueueFunction = queueFactory(() => res())
+        enqueueFunction = queueFactory(res)
       })
 
       mockPoller.mockResolvedValue(mockFocusEvents[0])
@@ -113,7 +113,7 @@ describe('recording focus', async () => {
     it('ignores consecutive focus changes for the same program', async () => {
       let enqueueFunction
       const internalQueueDrained = new Promise(res => {
-        enqueueFunction = queueFactory(() => res())
+        enqueueFunction = queueFactory(res)
       })
 
       mockPoller.mockResolvedValue(mockFocusEvents[0])
@@ -184,7 +184,7 @@ describe('recording focus', async () => {
     it('is able to continue recording', async () => {
       let enqueueFunction
       const internalQueueDrained = new Promise(res => {
-        enqueueFunction = queueFactory(() => res())
+        enqueueFunction = queueFactory(res)
       })
 
       mockPoller.mockRejectedValue('MOCK FAIL')
