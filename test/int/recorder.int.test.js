@@ -5,7 +5,7 @@ const initDb = require('../../database')
 const queueFactory = require('../../lib/queue')
 const recorderFactory = require('../../lib/focus/recorder')
 
-describe('recording focus', async () => {
+describe('recording focus', () => {
   let dbConnection;
   let mockPoller;
   let mockListener;
